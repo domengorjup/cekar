@@ -44,6 +44,12 @@ nav:
   - Home: index.md
   - User guide:
       - Overview: user/index.md
+      - Getting started: user/getting-started.md
+      - Shopping lists: user/lists.md
+      - Done shopping: user/done-shopping.md
+      - Expenses: user/expenses.md
+      - Balances and settling up: user/balances.md
+      - Settings: user/settings.md
   - Developer guide:
       - Local development: dev/development.md
       - Testing: dev/testing.md

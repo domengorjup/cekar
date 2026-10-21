@@ -106,9 +106,9 @@
 
 ## 10. User documentation (after 2; finishes after 8; owns `docs/user/`, `README.md`, `mkdocs.yml`)
 
-- [ ] 10.1 Write `docs/user/` pages: install, first start (members in Settings), lists and suggestions, expenses and split choices, balances and settle up, done shopping.
-- [ ] 10.2 Write the README: what it is, install as an add-on, run standalone, environment variables, backups.
-- [ ] 10.3 Add real-app screenshots once group 8 has landed. `mkdocs build --strict` passes.
+- [x] 10.1 Write `docs/user/` pages: install, first start (members in Settings), lists and suggestions, expenses and split choices, balances and settle up, done shopping.
+- [x] 10.2 Write the README: what it is, install as an add-on, run standalone, environment variables, backups.
+- [x] 10.3 Add real-app screenshots once group 8 has landed. `mkdocs build --strict` passes.
 
 ## 11. Integration, release and verification (after 3–10)
 

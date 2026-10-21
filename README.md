@@ -13,10 +13,14 @@
 
 <p align="center"><a href="https://domengorjup.github.io/cekar/"><img src="https://img.shields.io/badge/Read_the_documentation-03a9f4?style=for-the-badge&logo=materialformkdocs&logoColor=white" alt="Read the documentation"></a></p>
 
-<!-- Screenshots: add 2-3 captioned screenshots from docs/assets/screenshots once the UI is built, in this form:
-![Shopping list](docs/assets/screenshots/<file>.png)
-*Caption.*
--->
+![Shopping list](docs/assets/screenshots/lists-groceries-desktop-light.png)
+*A shopping list; checked items wait below until you press Done shopping.*
+
+![Expenses](docs/assets/screenshots/expenses-desktop-light.png)
+*Balance and expenses. A shopping trip is one row.*
+
+![Expenses on a phone](docs/assets/screenshots/expenses-phone-dark.png)
+*The phone layout, in dark mode.*
 
 Cekar is a self-hosted replacement for a shared Google Keep shopping list and Splitwise, for one household. It uses Home Assistant users, so nobody needs a separate account.
 

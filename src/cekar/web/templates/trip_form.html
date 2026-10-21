@@ -13,7 +13,15 @@
   </div>
 {% endcall %}
 {% else %}
-{% call dialog(request, t('trip.title'), action, close) %}
+{% set priced_data = [] %}
+{% for item in form.priced %}{% set _ = priced_data.append({'id': item.item_id, 'name': item.name, 'for': item.for_whom_id, 'forName': item.for_whom_name}) %}{% endfor %}
+{% set trip_data = {'list': form.list_name, 'priced': priced_data,
+   'members': form.members | map(attribute='id') | list,
+   'equal': t('expense.split.equal'), 'personal': t('expense.split.personal'),
+   'forTemplate': t('item.for_person', name='{name}'),
+   'exceed': t('error.trip.prices_exceed_total', prices='{prices}', total='{total}')} %}
+{% set extra %}data-trip="{{ trip_data | tojson | forceescape }}"{% endset %}
+{% call dialog(request, t('trip.title'), action, close, extra) %}
   <div class="dialog-body">
     {{ messages(errors) }}
     <div class="grid2">
@@ -42,6 +50,10 @@
       <div class="sum-line">{{ t('trip.shared_help') }}</div>
     </div>
     {% endif %}
+    <div class="js-only">
+      <h4>{{ t('trip.preview_title') }}</h4>
+      <div id="trip-preview" aria-live="polite"></div>
+    </div>
   </div>
   <div class="dialog-foot">
     <a class="btn" href="{{ url(request, close) }}" data-close>{{ t('common.cancel') }}</a>

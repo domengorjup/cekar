@@ -235,3 +235,12 @@ def test_main_exits_with_message_on_short_token(monkeypatch):
     monkeypatch.setenv("CEKAR_API_TOKEN", "short")
     with pytest.raises(SystemExit, match="at least 16"):
         main()
+
+
+def test_login_page_uses_the_catalog_and_prefix(engine, tmp_path):
+    c = make_client(engine, tmp_path, password="pw")
+    page = c.get("/login", headers={"X-Ingress-Path": "/api/hassio_ingress/abc"}).text
+    assert "Password" in page and "Log in" in page
+    assert 'action="/api/hassio_ingress/abc/login"' in page
+    wrong = c.post("/login", data={"password": "no"})
+    assert wrong.status_code == 401 and "Wrong password." in wrong.text

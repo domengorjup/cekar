@@ -32,7 +32,7 @@
         {% if kind == 'for_other' %}<span class="tag for">{{ t('item.for_person', name=for_name) }}</span>{% endif %}
         {% if kind == 'personal' %}<span class="tag personal">{{ t('expense.split.personal') }}</span>{% endif %}
       </span>
-      <span class="detail">{{ t('expense.paid_by', name=row.payer_name) }} · {{ date(row.spent_on) }} ·
+      <span class="detail">{{ t('expense.paid_by', name=row.payer_name) }} · <span class="nw">{{ date(row.spent_on) }}</span> ·
         {% if kind == 'equal' %}{{ t('expense.split.equal') }}
         {% elif kind == 'for_other' %}{{ t('expense.split.for', name=for_name) }}
         {% elif kind == 'personal' %}{{ t('expense.split.personal') }}
@@ -74,7 +74,7 @@
       <a class="row" href="{{ url(request, '/payments/' ~ row.id ~ '/edit') }}" data-dialog>
         <span class="badge t-payment">{{ icon('cash-multiple', 22) }}</span>
         <span class="body"><span class="title">{{ t('payment.title') }}</span>
-          <span class="detail">{{ t('payment.line', payer=row.from_name, payee=row.to_name) }} · {{ date(row.paid_on) }}</span></span>
+          <span class="detail">{{ t('payment.line', payer=row.from_name, payee=row.to_name) }} · <span class="nw">{{ date(row.paid_on) }}</span></span></span>
         <span class="side"><span class="amount pos">{{ money(row.amount_cents) }}</span><span class="party">{{ viewer_text(row.viewer) }}</span></span>
       </a>
       {% else %}
@@ -82,7 +82,7 @@
         <summary class="row trip-row">
           <span class="badge t-trip">{{ icon('cart-check', 22) }}</span>
           <span class="body"><span class="title">{{ t('trip.row_title', list=row.list_name) }}</span>
-            <span class="detail">{{ t('expense.paid_by', name=row.payer_name) }} · {{ date(row.spent_on) }} · {{ tn('trip.expense_count', row.expenses | length) }}</span></span>
+            <span class="detail">{{ t('expense.paid_by', name=row.payer_name) }} · <span class="nw">{{ date(row.spent_on) }}</span> · {{ tn('trip.expense_count', row.expenses | length) }}</span></span>
           <span class="side"><span class="amount">{{ money(row.total_cents) }}</span><span class="party">{{ viewer_text(row.viewer) }}</span></span>
           <span class="chev">{{ icon('chevron-down') }}</span>
         </summary>

@@ -227,6 +227,27 @@ def test_clear_checked(session, people, groceries):
     assert lists.clear_checked(session, people.ana.id, groceries.id) == 0
 
 
+def test_restore_cleared_brings_back_only_the_latest_clearing(session, people, groceries):
+    old = add(session, people, groceries, "Old")
+    lists.set_checked(session, people.ana.id, old.id, True)
+    lists.clear_checked(session, people.ana.id, groceries.id)
+    for name in ("A", "B"):
+        item = add(session, people, groceries, name)
+        lists.set_checked(session, people.ana.id, item.id, True)
+    lists.clear_checked(session, people.ana.id, groceries.id)
+
+    assert lists.restore_cleared(session, people.ana.id, groceries.id) == 2
+    view = lists.list_view(session, groceries.id)
+    assert sorted(names(view.checked)) == ["A", "B"]
+    assert lists.restore_cleared(session, people.ana.id, groceries.id) == 1  # now "Old"
+    assert lists.restore_cleared(session, people.ana.id, groceries.id) == 0
+
+
+def test_restore_cleared_unknown_list(session, people):
+    with pytest.raises(ServiceError):
+        lists.restore_cleared(session, people.ana.id, "nope")
+
+
 def test_update_item(session, people, groceries):
     milk = add(session, people, groceries, "Milk")
     lists.update_item(session, people.ana.id, milk.id, " Oat milk ", "1 l", people.bor.id)

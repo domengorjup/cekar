@@ -16,12 +16,12 @@ from fastapi.responses import RedirectResponse
 from markupsafe import Markup, escape
 
 from cekar.config import Mode
-from cekar.i18n import t
+from cekar.i18n import t, tn
 from cekar.identity import USER_ID_HEADER
 from cekar.urls import url
 from cekar.web.templating import templates
 
-UndoKind = Literal["item", "list", "expense", "payment"]
+UndoKind = Literal["item", "list", "expense", "payment", "clear"]
 
 # Undo posts to these routes (the id is a UUID).
 RESTORE_PATHS: dict[str, str] = {
@@ -29,6 +29,7 @@ RESTORE_PATHS: dict[str, str] = {
     "list": "/lists/{id}/restore",
     "expense": "/expenses/{id}/restore",
     "payment": "/payments/{id}/restore",
+    "clear": "/lists/{id}/unclear",  # id is the list
 }
 _UUID = re.compile(r"^[0-9a-f-]{36}$")
 _NAME_SHOWN = 60
@@ -70,6 +71,12 @@ def deleted_redirect(
     return RedirectResponse(url(request, path) + query, status_code=303)
 
 
+def cleared_redirect(request: Request, path: str, list_id: str, count: int) -> RedirectResponse:
+    """Redirect after "Clear checked"; the next page offers Undo (design D17)."""
+    query = f"?undo=clear&id={list_id}&n={count}"
+    return RedirectResponse(url(request, path) + query, status_code=303)
+
+
 def _quote(text: str) -> str:
     from urllib.parse import quote
 
@@ -87,6 +94,12 @@ def undo_info(request: Request) -> dict | None:
     row_id = request.query_params.get("id", "")
     if kind not in RESTORE_PATHS or not _UUID.match(row_id):
         return None
+    if kind == "clear":
+        count = request.query_params.get("n", "")
+        if not count.isdigit():
+            return None
+        return {"message": tn("undo.cleared", int(count)),
+                "restore": RESTORE_PATHS[kind].format(id=row_id)}
     name = request.query_params.get("name", "")[:_NAME_SHOWN]
     thing = t(f"undo.thing.{kind}")
     if name:

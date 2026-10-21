@@ -18,13 +18,13 @@ from __future__ import annotations
 import hashlib
 import hmac
 import logging
-from html import escape
 
 from fastapi import APIRouter, FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from itsdangerous import BadSignature, URLSafeTimedSerializer
 
 from cekar.config import Mode, Settings
+from cekar.i18n import t
 from cekar.urls import url
 
 logger = logging.getLogger(__name__)
@@ -174,23 +174,11 @@ def install_auth(app: FastAPI) -> None:
 
 
 def _login_page(request: Request, error: str = "", status_code: int = 200) -> HTMLResponse:
-    css = escape(url(request, "/static/app.css"))
-    theme = escape(url(request, "/static/theme.js"))
-    action = escape(url(request, "/login"))
-    message = f"<p class='alert error' role='alert'>{escape(error)}</p>" if error else ""
-    html = (
-        "<!doctype html><html lang='en'><head><meta charset='utf-8'>"
-        "<meta name='viewport' content='width=device-width, initial-scale=1'>"
-        f"<title>Cekar login</title><script src='{theme}'></script>"
-        f"<link rel='stylesheet' href='{css}'></head><body>"
-        "<main class='login'><h1>Cekar</h1>"
-        f"<form class='card card-pad stack' method='post' action='{action}'>{message}"
-        "<div class='field'><label for='i-password'>Password</label>"
-        "<input id='i-password' type='password' name='password' required autofocus></div>"
-        "<div><button type='submit' class='btn primary'>Log in</button></div>"
-        "</form></main></body></html>"
+    from cekar.web.templating import templates  # late: templating imports the services
+
+    return templates.TemplateResponse(
+        request, "login.html", {"error": error}, status_code=status_code
     )
-    return HTMLResponse(html, status_code=status_code)
 
 
 @router.get("/login", response_class=HTMLResponse)
@@ -208,7 +196,7 @@ def login(request: Request, password: str = Form("")) -> Response:
     if not settings.password:
         return RedirectResponse(url(request, "/"), status_code=303)
     if not hmac.compare_digest(password.encode(), settings.password.encode()):
-        return _login_page(request, "Wrong password.", status_code=401)
+        return _login_page(request, t("login.wrong_password"), status_code=401)
     response = RedirectResponse(url(request, "/"), status_code=303)
     response.set_cookie(
         SESSION_COOKIE,

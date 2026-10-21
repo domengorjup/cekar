@@ -50,10 +50,10 @@
   <div id="overlay"></div>
   {% set undo = undo_info(request) %}
   {% if undo %}
-  <div class="snackbar" id="snackbar" role="status" data-return="{{ query_url(request, undo=None, id=None, name=None) }}">
+  <div class="snackbar" id="snackbar" role="status" data-return="{{ query_url(request, undo=None, id=None, name=None, n=None) }}">
     <span class="msg">{{ undo.message }}</span>
     <form method="post" action="{{ url(request, undo.restore) }}"><button type="submit">{{ t('common.undo') }}</button></form>
-    <a class="icon-btn" href="{{ query_url(request, undo=None, id=None, name=None) }}" data-snack-close aria-label="{{ t('common.close') }}">{{ icon('close', 20) }}</a>
+    <a class="icon-btn" href="{{ query_url(request, undo=None, id=None, name=None, n=None) }}" data-snack-close aria-label="{{ t('common.close') }}">{{ icon('close', 20) }}</a>
   </div>
   {% endif %}
   <script src="{{ url(request, '/static/app.js') }}" defer></script>

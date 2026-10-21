@@ -9,7 +9,7 @@ The web UI follows Home Assistant (HA) and Material conventions, so that it look
 3. **Reuse before adding.** Look through this page first. A new class needs a new entry here; a near-duplicate of an existing element gets merged instead.
 4. **No plain text links for in-app navigation.** Navigate with buttons, icon buttons, list rows, tabs, chips or segmented choices. Plain links are only for external or documentation links inside body text.
 5. **Dialogs are pages first.** Every dialog is a normal server-rendered page; `app.js` only fetches it into `#overlay`. Everything works without JavaScript.
-6. **Numbers never wrap.** Money comes from `money` (`€42.10`, one token) and values use `white-space: nowrap`.
+6. **Numbers never wrap.** Dates in rows sit in `span.nw`. Money comes from `money` (`€42.10`, one token) and values use `white-space: nowrap`.
 7. **Every URL goes through `url(request, ...)`** so Ingress prefixes work.
 
 ## Tokens
@@ -191,7 +191,7 @@ A native `<details>` with a `<summary>`; no custom widget. Used for archived ite
 
 ### Snackbar (delete and undo)
 
-`.snackbar` at the bottom of the screen (above the bottom nav on phones): message, an `Undo` button and a close icon, hidden after 10 seconds. A delete redirects to the page with `?undo=<kind>&id=<uuid>&name=<text>`; `base.html` renders the snackbar from those parameters (`undo_info()` in `web/ui.py`), so Undo works without JavaScript. Undo posts to the matching `.../restore` route. `deleted_redirect()` builds the redirect. Only deleting a whole list asks first (confirm dialog), and it offers Undo too. It replaces the toast for deletes.
+`.snackbar` at the bottom of the screen (above the bottom nav on phones): message, an `Undo` button and a close icon, hidden after 10 seconds. A delete redirects to the page with `?undo=<kind>&id=<uuid>&name=<text>`; `base.html` renders the snackbar from those parameters (`undo_info()` in `web/ui.py`), so Undo works without JavaScript. Undo posts to the matching `.../restore` route. `deleted_redirect()` builds the redirect. "Clear checked" also offers Undo (`?undo=clear&id=<list>&n=<count>`, restore route `/lists/<id>/unclear`, service `lists.restore_cleared`). Only deleting a whole list asks first (confirm dialog), and it offers Undo too. It replaces the toast for deletes.
 
 ```html
 <div class="snackbar" id="snackbar" role="status">
@@ -247,6 +247,7 @@ The list switcher is `.chips.lists` of `a.chip` with a `span.n` count of uncheck
 - `.mini-list`, `.mini-row`, `.sum-line`: compact list of shared items with a footnote.
 - `.split-wrap` with a wrapping `.seg.wrap` of radio `label`s (expense split); the panel after it (`.split-panel.panel-equal`, `-for`, `-personal`, `-exact`) is shown by CSS `:has()` for the checked radio, so it needs no script. `.member-chips` are checkbox chips.
 - `.exact-rows` (one field per member) and `.left-line` (`.ok` or `.bad`; "Left to assign" with the amount, updated by `app.js`).
+- `.js-only` content is shown only with JavaScript: the Done shopping preview (`#trip-preview`, `.mini-list` of the expenses that will be recorded, or an error `.alert` when the prices exceed the total).
 - `.grid2` pairs the amount and the date.
 
 ### Settings rows

@@ -28,6 +28,7 @@
     var first = overlay.querySelector("input:not([type=hidden]), select, textarea");
     if (first && !overlay.querySelector(".chooser, .confirm")) { first.focus(); }
     overlay.querySelectorAll("form[data-expense]").forEach(initExpenseForm);
+    initTripForms(overlay);
   }
 
   function openDialog(href) {
@@ -382,6 +383,71 @@
     if (event.target.name === "split") { updateLeft(form); }
   });
   document.querySelectorAll("form[data-expense]").forEach(initExpenseForm);
+
+  /* ---------- Done shopping: preview of the expenses that will be recorded ---------- */
+  function initTripForm(form) {
+    var data = JSON.parse(form.getAttribute("data-trip"));
+    var box = form.querySelector("#trip-preview");
+    var submit = form.querySelector("button[type=submit]");
+    var sprite = document.body.getAttribute("data-sprite");
+    function icon(name) {
+      return '<svg class="mdi" width="20" height="20" aria-hidden="true"><use href="' + sprite + "#" + name + '"/></svg>';
+    }
+    function row(iconName, title, label, cents) {
+      var el = document.createElement("div");
+      el.className = "mini-row";
+      el.innerHTML = icon(iconName) + '<span class="t"></span><span class="a"></span>';
+      el.querySelector(".t").textContent = title;
+      var small = document.createElement("small");
+      small.textContent = label;
+      el.querySelector(".t").appendChild(small);
+      el.querySelector(".a").textContent = euros(cents);
+      return el;
+    }
+    function draw() {
+      var total = parseCents(form.elements.total.value);
+      var payer = form.elements.payer.value;
+      var sum = 0;
+      var byPerson = {};
+      data.priced.forEach(function (item) {
+        var cents = parseCents((form.elements["price_" + item.id] || { value: "" }).value);
+        if (cents) { sum += cents; (byPerson[item.for] = byPerson[item.for] || []).push({ item: item, cents: cents }); }
+      });
+      box.innerHTML = "";
+      if (total === null) { submit.disabled = false; return; }
+      if (sum > total) {
+        var alert = document.createElement("div");
+        alert.className = "alert error";
+        alert.setAttribute("role", "alert");
+        alert.textContent = data.exceed.replace("{prices}", euros(sum)).replace("{total}", euros(total));
+        box.appendChild(alert);
+        submit.disabled = true;
+        return;
+      }
+      submit.disabled = false;
+      var list = document.createElement("div");
+      list.className = "mini-list";
+      data.members.forEach(function (id) {
+        var owned = byPerson[id];
+        if (!owned) { return; }
+        var cents = owned.reduce(function (a, o) { return a + o.cents; }, 0);
+        var names = owned.map(function (o) { return o.item.name; }).join(", ");
+        var mine = id === payer;
+        list.appendChild(row(mine ? "account" : "arrow-right", data.list + ": " + names,
+          mine ? data.personal : data.forTemplate.replace("{name}", owned[0].item.forName), cents));
+      });
+      if (total - sum > 0) { list.appendChild(row("account-multiple", data.list, data.equal, total - sum)); }
+      box.appendChild(list);
+    }
+    form.addEventListener("input", draw);
+    form.addEventListener("change", draw);
+    draw();
+  }
+
+  function initTripForms(root) {
+    root.querySelectorAll("form[data-trip]").forEach(initTripForm);
+  }
+  initTripForms(document);
 
   /* ---------- switches in Settings save on change ---------- */
   document.addEventListener("change", function (event) {

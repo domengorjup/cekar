@@ -11,7 +11,7 @@ from cekar.i18n import t
 from cekar.identity import CurrentUser
 from cekar.services import ServiceError, lists, members, suggestions
 from cekar.web.common import SessionDep, error_text, redirect, render, safe_next
-from cekar.web.ui import FormData, deleted_redirect
+from cekar.web.ui import FormData, cleared_redirect, deleted_redirect
 
 router = APIRouter()
 
@@ -156,7 +156,19 @@ def item_add(
 def items_clear(request: Request, session: SessionDep, user: CurrentUser, list_id: str):
     """Clear the checked items."""
     try:
-        lists.clear_checked(session, user.id, list_id)
+        count = lists.clear_checked(session, user.id, list_id)
+    except ServiceError as exc:
+        raise _not_found(exc) from exc
+    if count == 0:
+        return redirect(request, f"/lists/{list_id}")
+    return cleared_redirect(request, f"/lists/{list_id}", list_id, count)
+
+
+@router.post("/lists/{list_id}/unclear")
+def items_unclear(request: Request, session: SessionDep, user: CurrentUser, list_id: str):
+    """Undo "Clear checked"."""
+    try:
+        lists.restore_cleared(session, user.id, list_id)
     except ServiceError as exc:
         raise _not_found(exc) from exc
     return redirect(request, f"/lists/{list_id}")

@@ -545,6 +545,35 @@ def clear_checked(session: Session, actor_id: str, list_id: str) -> int:
     return len(items)
 
 
+def restore_cleared(session: Session, actor_id: str, list_id: str) -> int:
+    """
+    Undo ``clear_checked``: bring back the items of the latest clearing.
+
+    These are the live items of the list that share the most recent
+    ``cleared_at``. They are checked again. Returns how many came back.
+
+    Raises
+    ------
+    ServiceError
+        ``error.not_found`` (list).
+    """
+    get_list(session, list_id)
+    cleared = list(
+        session.scalars(
+            sync.live(
+                select(Item).where(Item.list_id == list_id, Item.cleared_at.is_not(None))
+            ).order_by(Item.cleared_at.desc())
+        )
+    )
+    if not cleared:
+        return 0
+    latest = [item for item in cleared if item.cleared_at == cleared[0].cleared_at]
+    for item in latest:
+        item.cleared_at = None
+        sync.touch(item, session)
+    return len(latest)
+
+
 def checked_items(session: Session, list_id: str) -> list[Item]:
     """
     Return the live checked, not cleared items of a list, most recently

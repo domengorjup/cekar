@@ -118,3 +118,35 @@ def test_empty_name_is_refused_with_a_message(ana_and_bor):
     list_id = list_path.rsplit("/", 1)[1]
     bad = ana.post(f"/lists/{list_id}/items", data={"name": "  "})
     assert bad.status_code == 422 and "Enter what to buy." in bad.text
+
+
+def test_clear_checked_offers_undo(ana_and_bor):
+    ana, *_ = ana_and_bor
+    list_path = ana.post("/lists/new", data={"name": "Weekly"}).headers["location"]
+    list_id = list_path.rsplit("/", 1)[1]
+    for name in ("Eggs", "Flour"):
+        ana.post(f"/lists/{list_id}/items", data={"name": name})
+    for item_id in re.findall(r"/items/([0-9a-f-]{36})/check", ana.get(list_path).text):
+        ana.post(f"/items/{item_id}/check", data={"checked": "1"})
+
+    cleared = ana.post(f"/lists/{list_id}/clear")
+    page = ana.get(cleared.headers["location"]).text
+    assert "Cleared 2 checked items" in page and "Undo" in page
+    assert "Eggs" not in page
+
+    restore = _id(page, r'action="([^"]*/lists/[0-9a-f-]{36}/unclear)"')
+    assert ana.post(restore).status_code == 303
+    back = ana.get(list_path).text
+    assert "Eggs" in back and "Flour" in back
+
+
+def test_done_shopping_form_has_the_preview_hooks(ana_and_bor):
+    ana, _, _, bor = ana_and_bor
+    list_path = ana.post("/lists/new", data={"name": "Weekly"}).headers["location"]
+    list_id = list_path.rsplit("/", 1)[1]
+    ana.post(f"/lists/{list_id}/items", data={"name": "Razor", "for_whom": bor.id})
+    item_id = _id(ana.get(list_path).text, r"/items/([0-9a-f-]{36})/check")
+    ana.post(f"/items/{item_id}/check", data={"checked": "1"})
+    form = ana.get(f"/lists/{list_id}/done").text
+    assert "data-trip=" in form and 'id="trip-preview"' in form
+    assert "What will be recorded" in form

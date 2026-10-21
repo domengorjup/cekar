@@ -1,72 +1,78 @@
-"""Pure helpers to show and parse numbers in storage units (cents)."""
+"""
+Show and parse money and dates (design D5, D10). FROZEN SIGNATURES:
+``money``, ``date``, ``month_label``, ``parse_amount``.
+
+English style in v1.0: ``€12.50``, ``21 Oct 2026``. Month names come from
+the catalog. Group 7 owns the details of ``money`` and ``date`` from here on.
+"""
 
 from __future__ import annotations
 
-from datetime import date
-from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
+import datetime as dt
+import re
 
-# Numbers and their units must never wrap onto two lines.
-NBSP = "\u00a0"
+from cekar.i18n import t
+from cekar.services import ServiceError
 
-MONTH_NAMES = (
-    "January", "February", "March", "April", "May", "June", "July",
-    "August", "September", "October", "November", "December",
-)  # fmt: skip
+CURRENCY_SYMBOL = "€"  # EUR is fixed
 
-
-CURRENCY_SYMBOL = "\u20ac"  # EUR is fixed
-
-
-def money(cents: int | None) -> str:
-    """Return cents as ``"123.45 \u20ac"`` (non-breaking space), or ``"n/a"``."""
-    if cents is None:
-        return "n/a"
-    return f"{format_cents(cents)}{NBSP}{CURRENCY_SYMBOL}"
-
-
-def with_unit(text: str, unit: str) -> str:
-    """Join a number and its unit with a non-breaking space."""
-    return f"{text}{NBSP}{unit}"
-
-
-def short_date(day: date) -> str:
-    """Return ``5 May`` (English month names regardless of the server locale)."""
-    return f"{day.day}{NBSP}{MONTH_NAMES[day.month - 1][:3]}"
-
-
-def month_label(year: int, month: int) -> str:
-    """Return ``May 2026``."""
-    return f"{MONTH_NAMES[month - 1]} {year}"
+# Optional minus (rejected as not positive), whole euros, optional decimal
+# comma or point with one or two digits. No thousands separators.
+_AMOUNT = re.compile(r"^(-?)([0-9]+)(?:[.,]([0-9]{1,2}))?$")
+_MAX_EURO_DIGITS = 7  # up to EUR 9,999,999.99; longer input is a typo
 
 
 def format_cents(cents: int) -> str:
-    """Return ``12345`` as ``"123.45"``."""
-    return f"{Decimal(cents) / 100:.2f}"
+    """Return ``1250`` as ``"12.50"`` (form inputs; no currency symbol)."""
+    sign = "-" if cents < 0 else ""
+    euros, rest = divmod(abs(cents), 100)
+    return f"{sign}{euros}.{rest:02d}"
 
 
-def parse_decimal(text: str | None, field_name: str) -> Decimal | None:
+def money(cents: int) -> str:
+    """Return cents as ``"€12.50"`` (``"-€3.50"`` when negative)."""
+    text = format_cents(cents)
+    if text.startswith("-"):
+        return f"-{CURRENCY_SYMBOL}{text[1:]}"
+    return f"{CURRENCY_SYMBOL}{text}"
+
+
+def date(day: dt.date) -> str:
+    """Return ``21 Oct 2026`` (short month name from the catalog)."""
+    return f"{day.day} {t(f'date.month_short.{day.month}')} {day.year}"
+
+
+def month_label(year: int, month: int) -> str:
+    """Return ``October 2026`` (month heading of the expense list)."""
+    return f"{t(f'date.month.{month}')} {year}"
+
+
+def parse_amount(text: str | None) -> int:
     """
-    Parse a user-typed decimal; blank gives ``None``, comma is accepted.
+    Parse a user-typed euro amount into cents (design D5).
+
+    Accepts ``12,50``, ``12.50``, ``12,5`` and ``12``: at most two decimals,
+    a decimal comma or point, no thousands separators. Surrounding spaces
+    are ignored.
 
     Raises
     ------
-    ValueError
-        With a user-presentable message if the text is not a number.
+    ServiceError
+        ``error.amount.required`` (blank), ``error.amount.invalid`` (not an
+        amount, e.g. ``1,234`` or ``12.``), ``error.amount.too_large`` (more
+        than seven digits before the decimal), ``error.amount.not_positive``
+        (zero or negative).
     """
-    cleaned = (text or "").strip().replace(",", ".")
+    cleaned = (text or "").strip()
     if not cleaned:
-        return None
-    try:
-        value = Decimal(cleaned)
-    except InvalidOperation:
-        raise ValueError(f"{field_name}: '{text}' is not a number") from None
-    if not value.is_finite():
-        raise ValueError(f"{field_name}: '{text}' is not a number")
-    return value
-
-
-def to_scaled_int(value: Decimal | None, scale: int) -> int | None:
-    """Multiply by ``scale`` (100 for cents) and round half up."""
-    if value is None:
-        return None
-    return int((value * scale).quantize(Decimal(1), rounding=ROUND_HALF_UP))
+        raise ServiceError("error.amount.required")
+    match = _AMOUNT.match(cleaned)
+    if match is None:
+        raise ServiceError("error.amount.invalid")
+    sign, euros, decimals = match.groups()
+    if len(euros.lstrip("0")) > _MAX_EURO_DIGITS:
+        raise ServiceError("error.amount.too_large")
+    cents = int(euros) * 100 + int((decimals or "").ljust(2, "0"))
+    if sign or cents == 0:
+        raise ServiceError("error.amount.not_positive")
+    return cents

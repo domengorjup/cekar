@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import secrets
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -12,7 +13,10 @@ from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from cekar.models import Setting
+
 DB_FILENAME = "cekar.db"
+SECRET_SETTING = "secret"
 MIGRATIONS_DIR = Path(__file__).parent / "migrations"
 
 
@@ -65,6 +69,22 @@ def run_migrations(engine: Engine) -> None:
     with engine.begin() as connection:
         config.attributes["connection"] = connection
         command.upgrade(config, "head")
+
+
+def load_or_create_secret(engine: Engine) -> str:
+    """
+    Return the cookie-signing secret stored in the ``setting`` table.
+
+    Generated on first use and stored in the database under ``DATA_DIR``,
+    so session and identity cookies survive restarts (and backups). Needs
+    the migrated schema.
+    """
+    with Session(engine) as session, session.begin():
+        row = session.get(Setting, SECRET_SETTING)
+        if row is None:
+            row = Setting(key=SECRET_SETTING, value=secrets.token_urlsafe(32))
+            session.add(row)
+        return row.value
 
 
 def get_session(request: Request) -> Iterator[Session]:

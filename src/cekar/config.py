@@ -37,7 +37,9 @@ class Settings:
     api_token : str | None
         Bearer token for ``/api/v1`` in standalone mode; ``None`` disables it.
     secret : str | None
-        Key used to sign session cookies.
+        Key used to sign session and identity cookies (``CEKAR_SECRET``).
+        When unset, ``create_app`` fills it with a secret generated once and
+        stored in the database under ``data_dir`` (``db.load_or_create_secret``).
     host, port : str, int
         Bind address used by the ``cekar`` command.
     api_port : int | None

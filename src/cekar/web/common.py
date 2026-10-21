@@ -10,13 +10,32 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from cekar.db import get_session
+from cekar.i18n import t
+from cekar.services import ServiceError, ServiceWarning
 from cekar.urls import url
+from cekar.web.formatting import money
 from cekar.web.templating import templates
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
 # Sent by the page script when it wants only the dialog markup of a page.
 DIALOG_HEADER = "X-Cekar-Dialog"
+
+
+def error_text(error: ServiceError | ServiceWarning) -> str:
+    """
+    Translate a service error or warning into the user's message.
+
+    Parameters named ``*_cents`` are shown as money under the name without
+    the suffix (``left_cents=500`` fills ``{left}`` with ``€5.00``).
+    """
+    params: dict[str, object] = {}
+    for name, value in error.params.items():
+        if name.endswith("_cents"):
+            params[name.removesuffix("_cents")] = money(value)
+        else:
+            params[name] = value
+    return t(error.key, **params)
 
 
 def safe_next(target: str) -> str:

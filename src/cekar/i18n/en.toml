@@ -1,0 +1,92 @@
+# English message catalog (design D10). Flat dotted keys: TOML tables are
+# flattened, so [error.amount] required = "..." is the key "error.amount.required".
+# Placeholders use {name}. Plural keys hold one entry per plural category
+# (English: one, other); tn() passes the count as {n}.
+
+[app]
+name = "Cekar"
+
+[nav]
+lists = "Lists"
+expenses = "Expenses"
+settings = "Settings"
+sections = "Sections"
+
+# Month names for date() and month headings.
+[date.month_short]
+1 = "Jan"
+2 = "Feb"
+3 = "Mar"
+4 = "Apr"
+5 = "May"
+6 = "Jun"
+7 = "Jul"
+8 = "Aug"
+9 = "Sep"
+10 = "Oct"
+11 = "Nov"
+12 = "Dec"
+
+[date.month]
+1 = "January"
+2 = "February"
+3 = "March"
+4 = "April"
+5 = "May"
+6 = "June"
+7 = "July"
+8 = "August"
+9 = "September"
+10 = "October"
+11 = "November"
+12 = "December"
+
+# Validation messages raised by the services (ServiceError keys).
+[error]
+not_found = "This no longer exists. It may have been deleted."
+
+[error.amount]
+required = "Enter an amount."
+invalid = "Enter an amount like 12.50 or 12,50, with at most two decimals."
+not_positive = "The amount must be more than zero."
+too_large = "That amount is too large."
+
+[error.person]
+name_required = "Enter a name."
+name_too_long = "A name can have at most {max_length} characters."
+name_taken = "{name} is already on the list of people."
+
+[error.list]
+name_required = "Enter a name for the list."
+name_too_long = "A list name can have at most {max_length} characters."
+
+[error.item]
+name_required = "Enter what to buy."
+name_too_long = "An item name can have at most {max_length} characters."
+quantity_too_long = "A quantity can have at most {max_length} characters."
+for_whom_not_member = "Only members of shared expenses can be chosen here."
+
+[error.expense]
+fewer_than_two_members = "Shared expenses need at least two members. Tick them in Settings."
+title_required = "Enter a title."
+title_too_long = "A title can have at most {max_length} characters."
+payer_not_member = "The payer must be a member of shared expenses."
+participant_not_member = "Only members of shared expenses can share an expense."
+no_participants = "Choose at least one person to split with."
+for_other_is_payer = "Choose someone other than the payer."
+share_negative = "Amounts cannot be negative."
+exact_left = "{left} left. The amounts must add up to the total."
+exact_over = "{over} too much. The amounts must add up to the total."
+
+[error.payment]
+same_person = "Choose two different people."
+not_member = "Payments are only possible between members, or to settle an open balance."
+
+[error.trip]
+no_checked_items = "There are no checked items on this list."
+item_not_priceable = "A price was given for an item that cannot be priced."
+prices_exceed_total = "The item prices ({prices}) are more than the total ({total})."
+
+# Non-blocking notices (ServiceWarning keys).
+[warning.payment]
+overpay = "This is {excess} more than is owed ({owed}). The balance will turn the other way."

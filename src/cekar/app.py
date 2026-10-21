@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import AsyncIterator, Iterator
-from contextlib import asynccontextmanager, contextmanager
+from collections.abc import Iterator
+from contextlib import contextmanager
+from dataclasses import replace
 
 import uvicorn
 from fastapi import FastAPI
@@ -16,7 +17,12 @@ from cekar import __version__
 from cekar.api import v1
 from cekar.auth import install_api_auth, install_auth
 from cekar.config import Mode, Settings, load_settings
-from cekar.db import make_engine, make_session_factory, run_migrations
+from cekar.db import (
+    load_or_create_secret,
+    make_engine,
+    make_session_factory,
+    run_migrations,
+)
 from cekar.web import router as web_router
 from cekar.web.templating import STATIC_DIR
 
@@ -33,23 +39,24 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
         Default is ``load_settings()``.
     engine : Engine | None, optional
         Default is a file database under ``settings.data_dir``. Tests pass an
-        in-memory engine. Migrations run to ``head`` at startup either way.
+        in-memory engine. Migrations run to ``head`` here, before anything
+        else touches the database.
 
     Returns
     -------
     FastAPI
         App with ``state.settings``, ``state.engine`` and
-        ``state.session_factory`` set.
+        ``state.session_factory`` set. Without ``CEKAR_SECRET``,
+        ``state.settings.secret`` is the secret generated once and stored in
+        the database.
     """
     settings = settings or load_settings()
     engine = engine or make_engine(settings.data_dir)
+    run_migrations(engine)
+    if not settings.secret:
+        settings = replace(settings, secret=load_or_create_secret(engine))
 
-    @asynccontextmanager
-    async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-        run_migrations(engine)
-        yield
-
-    app = FastAPI(title="Cekar", version=__version__, lifespan=lifespan)
+    app = FastAPI(title="Cekar", version=__version__)
     app.state.settings = settings
     app.state.engine = engine
     app.state.session_factory = make_session_factory(engine)

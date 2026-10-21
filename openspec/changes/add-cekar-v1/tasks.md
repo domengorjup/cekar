@@ -25,18 +25,18 @@
 
 ## 1. Foundation (sequential; owns `pyproject.toml`, `config.py`, `db.py`, `models.py`, `migrations/`, `services/sync.py`, `web/formatting.py`, `i18n.py` (stub), `i18n/en.toml` (initial), `services/*.py` (stubs), `app.py`, `urls.py`, `web/common.py`, `web/templating.py`, `templates/base.html`, `tests/conftest.py`)
 
-- [ ] 1.1 Check `pyproject.toml` (from the skeleton): `src/cekar` package; dependencies fastapi, uvicorn, sqlalchemy, alembic, jinja2, python-multipart, itsdangerous; dev dependencies pytest, httpx. Add anything missing with `uv add`.
-- [ ] 1.2 Check `config.py` (from the skeleton: `CEKAR_MODE`, `BASE_PATH`, `DATA_DIR`, `CEKAR_PORT`, `CEKAR_PASSWORD`, `CEKAR_API_TOKEN`, `CEKAR_API_PORT`, `CEKAR_SECRET`). Make sure a missing secret is generated once and stored under `DATA_DIR`, so identity cookies survive restarts.
-- [ ] 1.3 Implement `db.py`: SQLite under `DATA_DIR/cekar.db`, WAL mode, session factory.
-- [ ] 1.4 Implement `models.py` per design D13 with the sync fields of D12 (UUID text keys, `created_at`, `updated_at`, `deleted_at`, indexed `seq`) as a shared mixin; `change_counter` and `setting` tables; indexes on `item (list_id, deleted_at, cleared_at)`, `item (deleted_at, name_key)`, `expense_share (user_id)`.
-- [ ] 1.5 Replace the skeleton's empty `0001_initial` migration with the D13 schema (nothing is released yet, so no second migration is needed). `upgrade head` runs at startup.
-- [ ] 1.6 Implement `services/sync.py`: `next_seq(session)`, `touch(row, session)` (sets `updated_at` and `seq`), `soft_delete(row, session)` (stamps the row and its cascaded children with one shared `deleted_at`), `restore(row, session)` (clears `deleted_at` on the row and on children with the same `deleted_at`; sets `updated_at` and a new `seq`), `live(query)` (adds `deleted_at IS NULL`), `new_id()`.
-- [ ] 1.6a Add `restore` tests to the `sync.py` unit tests: same-`deleted_at` children come back, earlier-deleted children do not, `updated_at` and `seq` advance.
-- [ ] 1.7 Add `parse_amount(text) -> int` to `web/formatting.py` (design D5 input rules, raising a keyed validation error) and implement `split_equal(amount, participants, payer, order) -> dict[user_id, int]` in `services/expenses.py` (D5 rounding; the rest of that module stays a stub).
-- [ ] 1.8 Write the stub `i18n.py` (`t`, `tn`, `money`, `date`) and initial `i18n/en.toml` with the validation-error keys.
-- [ ] 1.9 Write the stub signatures with docstrings for `services/members.py`, `lists.py`, `suggestions.py`, `expenses.py`, `balances.py`, `trips.py`. Every write takes `actor_id` and plain values; errors are `ServiceError(key, **params)`.
-- [ ] 1.10 Create the app skeleton: `create_app`, `main`, router mounting, `url(request, path)` honouring `X-Ingress-Path`, then `BASE_PATH`, then `/`; `base.html` using the helper and `t()`.
-- [ ] 1.11 Set up the pytest scaffold: migrated in-memory engine, session, client fixtures; a fixture that creates members Ana, Bor, Cene. Unit tests for `sync.py`, `parse_amount` and `split_equal` (every rounding scenario in the expenses spec). Commit (checkpoint).
+- [x] 1.1 Check `pyproject.toml` (from the skeleton): `src/cekar` package; dependencies fastapi, uvicorn, sqlalchemy, alembic, jinja2, python-multipart, itsdangerous; dev dependencies pytest, httpx. Add anything missing with `uv add`.
+- [x] 1.2 Check `config.py` (from the skeleton: `CEKAR_MODE`, `BASE_PATH`, `DATA_DIR`, `CEKAR_PORT`, `CEKAR_PASSWORD`, `CEKAR_API_TOKEN`, `CEKAR_API_PORT`, `CEKAR_SECRET`). Make sure a missing secret is generated once and stored under `DATA_DIR`, so identity cookies survive restarts.
+- [x] 1.3 Implement `db.py`: SQLite under `DATA_DIR/cekar.db`, WAL mode, session factory.
+- [x] 1.4 Implement `models.py` per design D13 with the sync fields of D12 (UUID text keys, `created_at`, `updated_at`, `deleted_at`, indexed `seq`) as a shared mixin; `change_counter` and `setting` tables; indexes on `item (list_id, deleted_at, cleared_at)`, `item (deleted_at, name_key)`, `expense_share (user_id)`.
+- [x] 1.5 Replace the skeleton's empty `0001_initial` migration with the D13 schema (nothing is released yet, so no second migration is needed). `upgrade head` runs at startup.
+- [x] 1.6 Implement `services/sync.py`: `next_seq(session)`, `touch(row, session)` (sets `updated_at` and `seq`), `soft_delete(row, session)` (stamps the row and its cascaded children with one shared `deleted_at`), `restore(row, session)` (clears `deleted_at` on the row and on children with the same `deleted_at`; sets `updated_at` and a new `seq`), `live(query)` (adds `deleted_at IS NULL`), `new_id()`.
+- [x] 1.6a Add `restore` tests to the `sync.py` unit tests: same-`deleted_at` children come back, earlier-deleted children do not, `updated_at` and `seq` advance.
+- [x] 1.7 Add `parse_amount(text) -> int` to `web/formatting.py` (design D5 input rules, raising a keyed validation error) and implement `split_equal(amount, participants, payer, order) -> dict[user_id, int]` in `services/expenses.py` (D5 rounding; the rest of that module stays a stub).
+- [x] 1.8 Write the stub `i18n.py` (`t`, `tn`, `money`, `date`) and initial `i18n/en.toml` with the validation-error keys.
+- [x] 1.9 Write the stub signatures with docstrings for `services/members.py`, `lists.py`, `suggestions.py`, `expenses.py`, `balances.py`, `trips.py`. Every write takes `actor_id` and plain values; errors are `ServiceError(key, **params)`.
+- [x] 1.10 Create the app skeleton: `create_app`, `main`, router mounting, `url(request, path)` honouring `X-Ingress-Path`, then `BASE_PATH`, then `/`; `base.html` using the helper and `t()`.
+- [x] 1.11 Set up the pytest scaffold: migrated in-memory engine, session, client fixtures; a fixture that creates members Ana, Bor, Cene. Unit tests for `sync.py`, `parse_amount` and `split_equal` (every rounding scenario in the expenses spec). Commit (checkpoint).
 
 ## 2. UI mockup and design language (parallel with 1; owns `.mockups/ui-v1/`, `docs/dev/design.md`)
 

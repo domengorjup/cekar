@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>{% block title %}Cekar{% endblock %}</title>
+  <title>{% block title %}{{ t('app.name') }}{% endblock %}</title>
   {# Own assets only (no CDN); see static/VENDORED.md. theme.js runs first so the page never flashes the wrong theme. #}
   <script src="{{ url(request, '/static/theme.js') }}"></script>
   <link rel="stylesheet" href="{{ url(request, '/static/app.css') }}">
 </head>
 <body>
   <header class="app-header">
-    <a class="brand" href="{{ url(request, '/') }}">{{ icon('basket', 26) }}<span>Cekar</span></a>
-    <nav class="tabs" aria-label="Sections">
-      <a class="tab {{ 'active' if section == 'lists' }}" href="{{ url(request, '/') }}">Lists</a>
-      <a class="tab {{ 'active' if section == 'expenses' }}" href="{{ url(request, '/expenses') }}">Expenses</a>
+    <a class="brand" href="{{ url(request, '/') }}">{{ icon('basket', 26) }}<span>{{ t('app.name') }}</span></a>
+    <nav class="tabs" aria-label="{{ t('nav.sections') }}">
+      <a class="tab {{ 'active' if section == 'lists' }}" href="{{ url(request, '/') }}">{{ t('nav.lists') }}</a>
+      <a class="tab {{ 'active' if section == 'expenses' }}" href="{{ url(request, '/expenses') }}">{{ t('nav.expenses') }}</a>
     </nav>
   </header>
 
@@ -21,9 +21,9 @@
     {% block content %}{% endblock %}
   </main>
 
-  <nav class="bottom-nav" aria-label="Sections">
-    <a class="{{ 'active' if section == 'lists' }}" href="{{ url(request, '/') }}"><span class="pill">{{ icon('cart') }}</span>Lists</a>
-    <a class="{{ 'active' if section == 'expenses' }}" href="{{ url(request, '/expenses') }}"><span class="pill">{{ icon('cash') }}</span>Expenses</a>
+  <nav class="bottom-nav" aria-label="{{ t('nav.sections') }}">
+    <a class="{{ 'active' if section == 'lists' }}" href="{{ url(request, '/') }}"><span class="pill">{{ icon('cart') }}</span>{{ t('nav.lists') }}</a>
+    <a class="{{ 'active' if section == 'expenses' }}" href="{{ url(request, '/expenses') }}"><span class="pill">{{ icon('cash') }}</span>{{ t('nav.expenses') }}</a>
   </nav>
   <div id="overlay"></div>
   <script src="{{ url(request, '/static/app.js') }}" defer></script>

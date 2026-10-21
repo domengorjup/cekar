@@ -1,0 +1,76 @@
+{% extends layout %}
+{% from "_macros.html" import messages, field, select, dialog, members_hint with context %}
+{% set heading = t('expense.edit') if expense_id else t('expense.add') %}
+{% block title %}{{ heading }} - {{ t('app.name') }}{% endblock %}
+{% block content %}
+{% if members | length < 2 %}
+{% call dialog(request, heading, '/expenses', '/expenses') %}
+  <div class="dialog-body">{{ members_hint(request) }}</div>
+{% endcall %}
+{% else %}
+{% set action = ('/expenses/' ~ expense_id ~ '/edit') if expense_id else '/expenses/new' %}
+{% set pairs = [] %}
+{% for m in members %}{% set _ = pairs.append([m.id, m.display_name]) %}{% endfor %}
+{% set others = members | rejectattr('id', 'equalto', f.payer) | list %}
+{% set extra %}data-expense data-members="{{ pairs | tojson | forceescape }}" data-for-template="{{ t('expense.split.for', name='{name}') }}"{% endset %}
+{% call dialog(request, heading, action, '/expenses', extra) %}
+  <div class="dialog-body">
+    {{ messages(errors) }}
+    {{ field(t('expense.title'), 'title', f.title, placeholder=t('expense.title_placeholder'), required=True) }}
+    <div class="grid2">
+      {{ field(t('expense.amount'), 'amount', f.amount, suffix='€', inputmode='decimal', required=True) }}
+      {{ field(t('common.date'), 'date', f.date, type='date', required=True) }}
+    </div>
+    {{ select(t('common.paid_by'), 'payer', pairs, f.payer, required=True) }}
+
+    <div class="split-wrap">
+      <div class="lbl">{{ t('expense.split.label') }}</div>
+      <div class="seg wrap" role="radiogroup">
+        <label><input type="radio" name="split" value="equal" {{ 'checked' if f.split == 'equal' }}>{{ t('expense.split.equal_short') }}</label>
+        <label><input type="radio" name="split" value="for_other" {{ 'checked' if f.split == 'for_other' }}>
+          {%- if members | length == 2 %}<span data-for-label>{{ t('expense.split.for', name=(others[0].display_name if others else '')) }}</span>
+          {%- else %}{{ t('expense.split.for_someone') }}{% endif -%}</label>
+        <label><input type="radio" name="split" value="personal" {{ 'checked' if f.split == 'personal' }}>{{ t('expense.split.personal') }}</label>
+        <label><input type="radio" name="split" value="exact" {{ 'checked' if f.split == 'exact' }}>{{ t('expense.split.exact') }}</label>
+      </div>
+    </div>
+
+    <div class="split-panel panel-equal">
+      <div class="help flush">{{ t('expense.help.equal') }}</div>
+      <div class="member-chips">
+        {% for m in members %}
+        <label><input type="checkbox" name="participants" value="{{ m.id }}" {{ 'checked' if m.id in f.participants }}><span>{{ m.display_name }}</span></label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="split-panel panel-for">
+      {% if members | length > 2 %}
+      {% set options = [] %}
+      {% for m in members %}{% set _ = options.append((m.id, m.display_name)) %}{% endfor %}
+      {{ select(t('expense.choose_who'), 'for_user', options, f.for_user) }}
+      {% endif %}
+      <div class="help flush">{{ t('expense.help.for') }}</div>
+    </div>
+    <div class="split-panel panel-personal">
+      <div class="help flush">{{ t('expense.help.personal') }}</div>
+    </div>
+    <div class="split-panel panel-exact">
+      <div class="help flush">{{ t('expense.help.exact') }}</div>
+      <div class="exact-rows">
+        {% for m in members %}
+        {{ field(m.display_name, 'exact_' ~ m.id, f.exact.get(m.id, ''), suffix='€', inputmode='decimal') }}
+        {% endfor %}
+      </div>
+      <div class="left-line" data-ok="{{ t('expense.exact.ok') }}" data-left="{{ t('expense.exact.left') }}" data-over="{{ t('expense.exact.over') }}"></div>
+    </div>
+  </div>
+  <div class="dialog-foot">
+    {% if expense_id %}
+    <button type="submit" class="btn danger" formaction="{{ url(request, '/expenses/' ~ expense_id ~ '/delete') }}" formnovalidate>{{ t('common.delete') }}</button>
+    {% endif %}
+    <a class="btn" href="{{ url(request, '/expenses') }}" data-close>{{ t('common.cancel') }}</a>
+    <button type="submit" class="btn primary">{{ t('common.save') }}</button>
+  </div>
+{% endcall %}
+{% endif %}
+{% endblock %}

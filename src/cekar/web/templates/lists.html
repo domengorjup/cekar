@@ -1,5 +1,42 @@
 {% extends layout %}
+{% from "_macros.html" import messages with context %}
+{% block title %}{{ view.list.name }} - {{ t('app.name') }}{% endblock %}
 {% block content %}
-<h1>Lists</h1>
-<p class="empty">No shopping lists yet.</p>
+{% set list_id = view.list.id %}
+<div class="chips lists" aria-label="{{ t('list.switcher') }}">
+  {% for l in lists %}
+  <a class="chip {{ 'active' if l.id == list_id }}" href="{{ url(request, '/lists/' ~ l.id) }}">{{ l.name }} <span class="n">{{ counts[l.id] }}</span></a>
+  {% endfor %}
+  <a class="chip add" href="{{ url(request, '/lists/new') }}" data-dialog>{{ icon('plus', 18) }}{{ t('list.new') }}</a>
+</div>
+
+<div class="list-head">
+  <h1>{{ view.list.name }}</h1>
+  <a class="icon-btn" href="{{ url(request, '/lists/' ~ list_id ~ '/edit') }}" data-dialog aria-label="{{ t('list.actions') }}">{{ icon('dots-vertical') }}</a>
+</div>
+
+{% if cleared %}
+<div class="alert success page-alert">{{ icon('check-circle-outline', 20) }}<div class="txt">{{ tn('trip.cleared', cleared | int) }}</div></div>
+{% endif %}
+{{ messages(errors) }}
+
+<form class="card add-card" method="post" action="{{ url(request, '/lists/' ~ list_id ~ '/items') }}"
+      data-add data-suggest-url="{{ url(request, '/lists/' ~ list_id ~ '/suggest') }}">
+  <div class="add-field">
+    <button type="submit" class="add-btn" aria-label="{{ t('item.add_button') }}">{{ icon('plus', 22) }}</button>
+    <input name="name" type="text" value="{{ entered.name }}" placeholder="{{ t('item.add_placeholder') }}"
+           aria-label="{{ t('item.add_label') }}" maxlength="100" autocomplete="off" enterkeyhint="done">
+    <input name="quantity" type="text" value="{{ entered.quantity }}" placeholder="{{ t('item.qty_short') }}"
+           aria-label="{{ t('item.qty_label') }}" maxlength="30" autocomplete="off">
+    {% if members %}
+    <select name="for_whom" class="for-pick" aria-label="{{ t('item.for_label') }}"{% if members | length <= 2 %} data-cycle{% endif %}>
+      <option value="">{{ t('item.for_shared') }}</option>
+      {% for m in members %}<option value="{{ m.id }}" {{ 'selected' if entered.for_whom == m.id }}>{{ m.display_name }}</option>{% endfor %}
+    </select>
+    {% endif %}
+  </div>
+  <div id="suggest"></div>
+</form>
+
+{% include "list_items.html" %}
 {% endblock %}

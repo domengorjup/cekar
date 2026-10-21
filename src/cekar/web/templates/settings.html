@@ -1,0 +1,54 @@
+{% extends layout %}
+{% from "_macros.html" import avatar %}
+{% block title %}{{ t('nav.settings') }} - {{ t('app.name') }}{% endblock %}
+{% block content %}
+<div class="page-title"><h1>{{ t('nav.settings') }}</h1></div>
+
+<div class="summary-head"><h2>{{ t('settings.members') }}</h2>
+  {% if can_add_person %}<a class="btn with-icon" href="{{ url(request, '/settings/people/new') }}" data-dialog>{{ icon('plus', 18) }}{{ t('settings.add_person') }}</a>{% endif %}
+</div>
+<div class="card list-card settings-sec">
+  {% for p in people %}
+  <form class="row" method="post" action="{{ url(request, '/settings/members/' ~ p.id) }}" data-autosubmit-form>
+    {{ avatar(p) }}
+    <span class="body"><span class="title">{{ p.display_name }}{% if p.id == user.id %} <span class="tag">{{ t('settings.you') }}</span>{% endif %}</span>
+      <span class="detail">{{ t('settings.from_ha') if p.ha_user_id else t('settings.added_by_hand') }}</span></span>
+    <label class="switch">
+      <input type="checkbox" name="member" value="1" {{ 'checked' if p.is_member }} aria-label="{{ t('settings.member_of') }}" data-autosubmit>
+      <span class="track"></span>
+    </label>
+    <noscript><button type="submit" class="btn">{{ t('common.save') }}</button></noscript>
+  </form>
+  {% endfor %}
+  <div class="help-card">{{ t('settings.members_help') }}</div>
+</div>
+
+<div class="summary-head"><h2>{{ t('settings.lists') }}</h2>
+  <a class="btn with-icon" href="{{ url(request, '/lists/new?next=/settings') }}" data-dialog>{{ icon('plus', 18) }}{{ t('list.new') }}</a>
+</div>
+<div class="card list-card">
+  {% for l in lists %}
+  <div class="row">
+    <a class="row-link" href="{{ url(request, '/lists/' ~ l.id ~ '/edit?next=/settings') }}" data-dialog>
+      <span class="badge">{{ icon('cart-outline', 22) }}</span>
+      <span class="body"><span class="title">{{ l.name }}</span><span class="detail">{{ tn('settings.list_items', counts[l.id]) }}</span></span>
+    </a>
+    <form method="post" action="{{ url(request, '/lists/' ~ l.id ~ '/move') }}" class="move">
+      <button class="icon-btn" name="direction" value="up" aria-label="{{ t('settings.move_up', name=l.name) }}" {{ 'disabled' if loop.first }}>{{ icon('chevron-down', 22) }}</button>
+      <button class="icon-btn" name="direction" value="down" aria-label="{{ t('settings.move_down', name=l.name) }}" {{ 'disabled' if loop.last }}>{{ icon('chevron-down', 22) }}</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+
+{% if can_switch %}
+<h2>{{ t('settings.who') }}</h2>
+<div class="card list-card">
+  <form class="row" method="post" action="{{ url(request, '/who/switch') }}">
+    {{ avatar(user) }}
+    <span class="body"><span class="title">{{ user.display_name }}</span><span class="detail">{{ t('settings.who_help') }}</span></span>
+    <button type="submit" class="btn">{{ t('user.switch_person') }}</button>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

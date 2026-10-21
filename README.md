@@ -13,7 +13,7 @@
 
 <p align="center"><a href="https://domengorjup.github.io/cekar/"><img src="https://img.shields.io/badge/Read_the_documentation-03a9f4?style=for-the-badge&logo=materialformkdocs&logoColor=white" alt="Read the documentation"></a></p>
 
-<!-- Screenshots: add 2-3 captioned screenshots from docs/assets/screenshots once the UI is built, in glovebox's form:
+<!-- Screenshots: add 2-3 captioned screenshots from docs/assets/screenshots once the UI is built, in this form:
 ![Shopping list](docs/assets/screenshots/<file>.png)
 *Caption.*
 -->

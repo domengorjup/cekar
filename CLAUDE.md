@@ -15,7 +15,7 @@ The name is the Slovenian word "cekar" (a shopping bag or basket). English speak
 - Never commit real personal data (names, receipts, exports); tests use invented people (Ana, Bor, Cene).
 
 ## Git
-- Remote: `git@github.com:domengorjup/cekar.git` (not created yet).
+- Remote: `git@github.com:domengorjup/cekar.git` (public).
 - Release procedure: bump the version in `addon/cekar/config.yaml`, `pyproject.toml` (then `uv lock`) and `SOURCE_REF=v<version>` in `addon/cekar/Dockerfile`, add a CHANGELOG entry, commit, tag `v<version>`, push `master` and the tag. Details in `docs/dev/release.md`.
 - Standing permission: commit locally at sensible checkpoints (after the foundation, after each completed task group, after final checks).
 - Standing permission: push `master` and release tags to `origin` (github.com/domengorjup/cekar) after tests pass. Never force-push or rewrite published history without asking.
@@ -44,7 +44,6 @@ Standing permissions for this loop: anything on the test VM `haos-test` (start/s
 
 ## Next steps
 - **Implement v1** (OpenSpec change `add-cekar-v1`): start with task group 0 (verify on `haos-test` that Ingress passes `X-Remote-User-Id` / `-Name` / `-Display-Name`, and what `Accept-Language` arrives), then the foundation, the mockup (needs the user's approval before the templates), and the parallel groups. Open questions Q1–Q4 are in its `design.md`.
-- **Create the GitHub repository** `domengorjup/cekar` (ask the user first), then the first push.
 - **v1.1 (separate OpenSpec changes, after v1 has been used for a while; decisions are settled in the change's `design.md` Follow-ups):** editable expense categories (5 defaults, managed in Settings, a default category per list) with a Stats sub-view and filters; CSV export and Splitwise CSV import with preview and undo under Settings > Data; recurring expenses; receipt photo and note; price memory per item (estimated list total); notifications via HA notify (needs `homeassistant_api`); a Lovelace card (probably a companion integration with a to-do entity per list; decide later).
 - **Later:** Slovenian catalog, language switch, per-user language preference and `Accept-Language` default (after or with v1.1).
 - **Stage 2: offline installable app** (design note `docs/dev/offline.md`, shared with the sibling). Not before v1 is in use.

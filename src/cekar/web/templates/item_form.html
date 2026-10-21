@@ -1,0 +1,23 @@
+{% extends layout %}
+{% from "_macros.html" import messages, field, select, dialog with context %}
+{% block title %}{{ t('item.edit') }} - {{ t('app.name') }}{% endblock %}
+{% block content %}
+{% set close = '/lists/' ~ item.list_id %}
+{% call dialog(request, t('item.edit'), '/items/' ~ item.id ~ '/edit', close) %}
+  <div class="dialog-body">
+    {{ messages(errors) }}
+    {{ field(t('item.name'), 'name', f.name, required=True) }}
+    {{ field(t('item.qty_label'), 'quantity', f.quantity, placeholder=t('item.qty_placeholder')) }}
+    {% set options = [('', t('item.for_nobody'))] %}
+    {% for m in members %}{% set _ = options.append((m.id, m.display_name)) %}{% endfor %}
+    {{ select(t('item.for_label'), 'for_whom', options, f.for_whom) }}
+    <div class="help">{{ t('item.for_help') }}</div>
+    <div class="help">{{ t('item.added_line', name=adder.display_name, date=date(item.created_at.date())) }}</div>
+  </div>
+  <div class="dialog-foot">
+    <button type="submit" class="btn danger" formaction="{{ url(request, '/items/' ~ item.id ~ '/delete') }}" formnovalidate>{{ t('common.delete') }}</button>
+    <a class="btn" href="{{ url(request, close) }}" data-close>{{ t('common.cancel') }}</a>
+    <button type="submit" class="btn primary">{{ t('common.save') }}</button>
+  </div>
+{% endcall %}
+{% endblock %}

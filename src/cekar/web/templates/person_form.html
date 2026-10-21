@@ -1,0 +1,13 @@
+{% extends layout %}
+{% from "_macros.html" import messages, field, dialog, dialog_foot with context %}
+{% block title %}{{ t('settings.add_person') }} - {{ t('app.name') }}{% endblock %}
+{% block content %}
+{% call dialog(request, t('settings.add_person'), '/settings/people/new', '/settings') %}
+  <div class="dialog-body">
+    {{ messages(errors) }}
+    {{ field(t('settings.person_name'), 'name', typed_name, required=True) }}
+    <div class="help flush">{{ t('settings.person_help') }}</div>
+  </div>
+  {{ dialog_foot(request, '/settings', t('common.save')) }}
+{% endcall %}
+{% endblock %}

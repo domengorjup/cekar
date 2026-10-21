@@ -59,7 +59,16 @@ def session_secret(settings: Settings) -> str:
 
 
 def _serializer(settings: Settings) -> URLSafeTimedSerializer:
-    return URLSafeTimedSerializer(session_secret(settings), salt=_SALT)
+    """
+    Serializer for session cookies.
+
+    The password is mixed into the key, so changing it invalidates every
+    session even though the base secret is now stored and stable.
+    """
+    key = session_secret(settings)
+    if settings.password:
+        key = hashlib.sha256(f"{key}:{settings.password}".encode()).hexdigest()
+    return URLSafeTimedSerializer(key, salt=_SALT)
 
 
 def has_valid_session(request: Request) -> bool:

@@ -11,6 +11,7 @@ lists = "Lists"
 expenses = "Expenses"
 settings = "Settings"
 sections = "Sections"
+user_menu = "User menu"
 
 # Month names for date() and month headings.
 [date.month_short]
@@ -90,3 +91,191 @@ prices_exceed_total = "The item prices ({prices}) are more than the total ({tota
 # Non-blocking notices (ServiceWarning keys).
 [warning.payment]
 overpay = "This is {excess} more than is owed ({owed}). The balance will turn the other way."
+
+# --- Web UI ------------------------------------------------------------------
+
+[common]
+close = "Close"
+cancel = "Cancel"
+save = "Save"
+delete = "Delete"
+confirm = "Confirm"
+undo = "Undo"
+date = "Date"
+paid_by = "Paid by"
+back_to = "Back to {parent}"
+
+
+
+[user]
+via_ha = "Home Assistant user"
+picked = "Chosen on this device"
+not_member = "not a member"
+switch_person = "Switch person"
+
+[undo]
+deleted = "Deleted {thing} {name}"
+deleted_unnamed = "Deleted {thing}"
+
+[undo.thing]
+item = "item"
+list = "list"
+expense = "expense"
+payment = "payment"
+
+[list]
+switcher = "Lists"
+new = "New list"
+edit = "Edit list"
+name = "List name"
+actions = "List actions"
+delete = "Delete list"
+delete_title = "Delete the list \"{name}\"?"
+delete_body.one = "The list and its {n} item are removed. You can still undo for a few seconds."
+delete_body.other = "The list and its {n} items are removed. You can still undo for a few seconds."
+empty = "Nothing on this list yet."
+checked_items.one = "{n} checked item"
+checked_items.other = "{n} checked items"
+clear_checked = "Clear checked"
+done_shopping = "Done shopping"
+default_name = "Shopping"
+
+[item]
+add_button = "Add item"
+add_placeholder = "Add an item..."
+add_label = "Add an item"
+qty_short = "Qty"
+qty_label = "Quantity"
+qty_placeholder = "e.g. 2 l, 500 g"
+name = "Name"
+edit = "Edit item"
+for_label = "For whom"
+for_shared = "Shared"
+for_nobody = "Nobody (shared)"
+for_help = "Only members of shared expenses can be picked."
+for_person = "For {name}"
+added_by = "Added by {name}"
+added_line = "Added by {name} · {date}"
+checked_hint = "checked, tap to uncheck"
+check = "Check or uncheck {name}"
+reorder = "Move {name}"
+
+[trip]
+title = "Done shopping"
+total = "Receipt total"
+price = "Price"
+priced_title = "Items for one person"
+priced_help = "Enter their prices (optional). They are charged to the person named."
+shared_title = "Shared items"
+shared_help = "Split equally from the rest of the receipt."
+clear_title = "Clear the checked items?"
+clear_body = "Expenses need at least two members, so no expense is recorded. The checked items are cleared."
+clear_confirm = "Clear checked"
+row_title = "Shopping trip · {list}"
+cleared.one = "{n} checked item cleared."
+cleared.other = "{n} checked items cleared."
+saved.one = "Shopping trip saved: {n} expense recorded, checked items cleared."
+saved.other = "Shopping trip saved: {n} expenses recorded, checked items cleared."
+expense_count.one = "{n} expense"
+expense_count.other = "{n} expenses"
+
+[members]
+too_few = "Expenses need at least two members."
+too_few_help = "Tick the people who share expenses in Settings."
+open_settings = "Open Settings"
+
+[error.date]
+invalid = "Enter a valid date."
+
+[balance]
+title = "Balance"
+settle_up = "Settle up"
+settled = "All settled"
+you_are_owed = "You are owed {amount}"
+you_owe_total = "You owe {amount}"
+owes_you = "{name} owes you {amount}"
+you_owe = "You owe {name} {amount}"
+owes = "{debtor} owes {creditor} {amount}"
+
+[expense]
+add = "Add expense"
+edit = "Edit expense"
+title = "Title"
+title_placeholder = "e.g. Electricity bill"
+amount = "Amount"
+choose_who = "Who is it for?"
+none = "No expenses yet."
+paid_by = "Paid by {name}"
+
+[expense.split]
+label = "How is it split?"
+equal = "Split equally"
+equal_short = "Equally"
+for = "For {name}"
+for_someone = "For someone"
+personal = "Personal"
+exact = "Exact amounts"
+
+[expense.help]
+equal = "Everyone ticked pays the same."
+for = "The person chosen owes the full amount."
+personal = "Not shared. Nobody owes anything, it is only recorded."
+exact = "Enter what each person owes."
+
+[expense.exact]
+ok = "Matches the total"
+left = "Left to assign"
+over = "Too much"
+
+[expense.viewer]
+owe = "you owe {amount}"
+lent = "you lent {amount}"
+personal = "not shared"
+paid = "you paid"
+received = "you received"
+not_involved = "not involved"
+
+[payment]
+title = "Payment"
+line = "{payer} paid {payee}"
+payer_line = "{payer} pays {payee}"
+settle_title = "Settle up"
+edit = "Edit payment"
+amount = "Amount paid"
+record = "Record payment"
+owed_now = "Currently owed: {amount}. A smaller amount is fine."
+
+[settings]
+members = "Shared expenses"
+members_help = "Tick who takes part in shared expenses. Everyone can use the shopping lists."
+member_of = "Member of shared expenses"
+from_ha = "Home Assistant user"
+added_by_hand = "Added by hand"
+add_person = "Add person"
+person_name = "Name"
+person_help = "The person starts as a member of shared expenses."
+you = "you"
+lists = "Lists"
+list_items.one = "{n} item"
+list_items.other = "{n} items"
+move_up = "Move {name} up"
+move_down = "Move {name} down"
+who = "Who are you?"
+who_help = "Switch the person you act as."
+
+[member_off]
+title = "Turn off {name}?"
+body = "History is kept and the balance stays visible until it is settled."
+confirm = "Turn off"
+
+[who]
+title = "Who are you?"
+help = "Pick your name. Cekar remembers it on this device."
+member = "member of shared expenses"
+new_title = "Not in the list?"
+add = "Add and continue"
+
+[login]
+title = "Log in"
+password = "Password"
+submit = "Log in"

@@ -1,0 +1,45 @@
+{# The region the page script swaps while polling: unchecked items, checked section, actions. #}
+{% set list_id = view.list.id %}
+{% macro item_row(item, checked) %}
+<div class="row item {{ 'is-checked' if checked }} {{ 'hl' if item.id == hl }}" data-item="{{ item.id }}">
+  <form class="pick-form" method="post" action="{{ url(request, '/items/' ~ item.id ~ '/check') }}" data-ajax>
+    <input type="hidden" name="checked" value="{{ '0' if checked else '1' }}">
+    <button type="submit" class="pick {{ 'on' if checked }}" aria-pressed="{{ 'true' if checked else 'false' }}"
+            aria-label="{{ t('item.check', name=item.name) }}"><span class="circle">{{ icon('check', 16) }}</span></button>
+  </form>
+  <a class="row-link" href="{{ url(request, '/items/' ~ item.id ~ '/edit') }}" data-dialog>
+    <span class="body">
+      <span class="title"><span class="name">{{ item.name }}</span>
+        {% if item.quantity %}<span class="qty">{{ item.quantity }}</span>{% endif %}
+        {% if item.for_whom_name %}<span class="tag for">{{ t('item.for_person', name=item.for_whom_name) }}</span>{% endif %}
+      </span>
+      <span class="detail">{{ t('item.added_by', name=item.added_by_name) }}</span>
+    </span>
+  </a>
+  {% if not checked %}<button type="button" class="handle" aria-label="{{ t('item.reorder', name=item.name) }}">{{ icon('menu', 20) }}</button>{% endif %}
+</div>
+{% endmacro %}
+
+<div id="items" data-live data-version="{{ view.version }}"
+     data-version-url="{{ url(request, '/lists/' ~ list_id ~ '/version') }}"
+     data-fragment-url="{{ url(request, '/lists/' ~ list_id ~ '/items') }}">
+  <div class="card list-card" data-reorder-url="{{ url(request, '/lists/' ~ list_id ~ '/reorder') }}">
+    {% for item in view.unchecked %}{{ item_row(item, false) }}
+    {% else %}<div class="empty">{{ t('list.empty') }}</div>{% endfor %}
+  </div>
+
+  {% if view.checked %}
+  <details class="checked-section" id="checked-section">
+    <summary>{{ tn('list.checked_items', view.checked | length) }}</summary>
+    <div class="card list-card">
+      {% for item in view.checked %}{{ item_row(item, true) }}{% endfor %}
+    </div>
+  </details>
+  <div class="checked-actions">
+    <form method="post" action="{{ url(request, '/lists/' ~ list_id ~ '/clear') }}">
+      <button type="submit" class="btn outline with-icon">{{ icon('delete-outline', 18) }}{{ t('list.clear_checked') }}</button>
+    </form>
+    <a class="btn primary with-icon" href="{{ url(request, '/lists/' ~ list_id ~ '/done') }}" data-dialog>{{ icon('cart-check', 18) }}{{ t('list.done_shopping') }}</a>
+  </div>
+  {% endif %}
+</div>

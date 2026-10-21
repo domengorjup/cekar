@@ -1,0 +1,13 @@
+{% extends layout %}
+{% from "_macros.html" import confirm_dialog with context %}
+{% block title %}{{ t('list.delete') }} - {{ t('app.name') }}{% endblock %}
+{% block content %}
+{% call confirm_dialog(request, t('list.delete_title', name=list.name), '/lists/' ~ list.id ~ '/delete') %}
+  <input type="hidden" name="next" value="{{ next_path }}">
+  <p>{{ tn('list.delete_body', count) }}</p>
+  <div class="dialog-foot">
+    <a class="btn" href="{{ url(request, '/lists/' ~ list.id) }}" data-close>{{ t('common.cancel') }}</a>
+    <button type="submit" class="btn danger-fill">{{ t('list.delete') }}</button>
+  </div>
+{% endcall %}
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends layout %}
+{% from "_macros.html" import messages, field, dialog, dialog_foot with context %}
+{% set heading = t('list.edit') if list_id else t('list.new') %}
+{% block title %}{{ heading }} - {{ t('app.name') }}{% endblock %}
+{% block content %}
+{% set close = next_path or ('/lists/' ~ list_id if list_id else '/') %}
+{% call dialog(request, heading, ('/lists/' ~ list_id ~ '/edit') if list_id else '/lists/new', close) %}
+  <div class="dialog-body">
+    {{ messages(errors) }}
+    <input type="hidden" name="next" value="{{ next_path }}">
+    {{ field(t('list.name'), 'name', typed_name, required=True) }}
+  </div>
+  <div class="dialog-foot">
+    {% if list_id %}
+    <a class="btn danger" href="{{ url(request, '/lists/' ~ list_id ~ '/delete' ~ ('?next=' ~ next_path if next_path else '')) }}" data-dialog>{{ t('list.delete') }}</a>
+    {% endif %}
+    <a class="btn" href="{{ url(request, close) }}" data-close>{{ t('common.cancel') }}</a>
+    <button type="submit" class="btn primary">{{ t('common.save') }}</button>
+  </div>
+{% endcall %}
+{% endblock %}

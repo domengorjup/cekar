@@ -1,0 +1,97 @@
+{# Balances and the expense list: the region the page script swaps while polling. #}
+{% macro pair_text(p) %}
+  {%- if p.creditor_id == user.id -%}{{ t('balance.owes_you', name=p.debtor_name, amount=money(p.amount_cents)) }}
+  {%- elif p.debtor_id == user.id -%}{{ t('balance.you_owe', name=p.creditor_name, amount=money(p.amount_cents)) }}
+  {%- else -%}{{ t('balance.owes', debtor=p.debtor_name, creditor=p.creditor_name, amount=money(p.amount_cents)) }}
+  {%- endif -%}
+{% endmacro %}
+
+{% macro settle_button(p) %}
+  <a class="btn outline with-icon" href="{{ url(request, '/settle?debtor=' ~ p.debtor_id ~ '&creditor=' ~ p.creditor_id) }}" data-dialog>{{ icon('cash-multiple', 18) }}{{ t('balance.settle_up') }}</a>
+{% endmacro %}
+
+{% macro viewer_text(part) %}
+  {%- if part.kind == 'owe' -%}{{ t('expense.viewer.owe', amount=money(part.amount_cents)) }}
+  {%- elif part.kind == 'lent' -%}{{ t('expense.viewer.lent', amount=money(part.amount_cents)) }}
+  {%- elif part.kind == 'personal' -%}{{ t('expense.viewer.personal') }}
+  {%- elif part.kind == 'paid' -%}{{ t('expense.viewer.paid') }}
+  {%- elif part.kind == 'received' -%}{{ t('expense.viewer.received') }}
+  {%- else -%}{{ t('expense.viewer.not_involved') }}
+  {%- endif -%}
+{% endmacro %}
+
+{% macro expense_row(row) %}
+  {% set kind = row.split.value %}
+  {% set for_name = for_names.get(row.id, '') %}
+  <a class="row" href="{{ url(request, '/expenses/' ~ row.id ~ '/edit') }}" data-dialog>
+    <span class="badge t-{{ {'equal': 'equal', 'for_other': 'for', 'personal': 'personal', 'exact': 'exact'}[kind] }}">
+      {{ icon({'equal': 'account-multiple', 'for_other': 'arrow-right', 'personal': 'account', 'exact': 'swap-horizontal'}[kind], 22) }}
+    </span>
+    <span class="body">
+      <span class="title-line"><span class="title">{{ row.title }}</span>
+        {% if kind == 'for_other' %}<span class="tag for">{{ t('item.for_person', name=for_name) }}</span>{% endif %}
+        {% if kind == 'personal' %}<span class="tag personal">{{ t('expense.split.personal') }}</span>{% endif %}
+      </span>
+      <span class="detail">{{ t('expense.paid_by', name=row.payer_name) }} · {{ date(row.spent_on) }} ·
+        {% if kind == 'equal' %}{{ t('expense.split.equal') }}
+        {% elif kind == 'for_other' %}{{ t('expense.split.for', name=for_name) }}
+        {% elif kind == 'personal' %}{{ t('expense.split.personal') }}
+        {% else %}{{ t('expense.split.exact') }}{% endif %}</span>
+    </span>
+    <span class="side"><span class="amount">{{ money(row.amount_cents) }}</span><span class="party">{{ viewer_text(row.viewer) }}</span></span>
+  </a>
+{% endmacro %}
+
+<div id="expenses-live" data-live data-version="{{ version }}"
+     data-version-url="{{ url(request, '/expenses/version') }}"
+     data-fragment-url="{{ url(request, '/expenses/body') }}">
+  <div class="card balance-card">
+    <div class="label">{{ t('balance.title') }}</div>
+    {% if not pairs %}
+      <div class="bal-line"><div class="value pos">{{ icon('check-circle-outline', 22) }}{{ t('balance.settled') }}</div></div>
+    {% elif pairs | length == 1 or not user.is_member %}
+      {% for p in pairs %}
+      <div class="bal-line"><div class="value">{{ pair_text(p) }}</div>{{ settle_button(p) }}</div>
+      {% endfor %}
+    {% else %}
+      <div class="bal-line"><div class="value {{ 'pos' if own_total > 0 else 'neg' if own_total < 0 }}">
+        {%- if own_total > 0 %}{{ t('balance.you_are_owed', amount=money(own_total)) }}
+        {%- elif own_total < 0 %}{{ t('balance.you_owe_total', amount=money(-own_total)) }}
+        {%- else %}{{ t('balance.settled') }}{% endif -%}
+      </div></div>
+      {% for p in pairs %}
+      <div class="bal-line sub"><div class="value">{{ pair_text(p) }}</div>{{ settle_button(p) }}</div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  {% for group in groups %}
+  <div class="month-head"><h2>{{ month_label(group.year, group.month) }}</h2></div>
+  <div class="card list-card">
+    {% for row in group.rows %}
+      {% if row.kind == 'expense' %}{{ expense_row(row) }}
+      {% elif row.kind == 'payment' %}
+      <a class="row" href="{{ url(request, '/payments/' ~ row.id ~ '/edit') }}" data-dialog>
+        <span class="badge t-payment">{{ icon('cash-multiple', 22) }}</span>
+        <span class="body"><span class="title">{{ t('payment.title') }}</span>
+          <span class="detail">{{ t('payment.line', payer=row.from_name, payee=row.to_name) }} · {{ date(row.paid_on) }}</span></span>
+        <span class="side"><span class="amount pos">{{ money(row.amount_cents) }}</span><span class="party">{{ viewer_text(row.viewer) }}</span></span>
+      </a>
+      {% else %}
+      <details class="trip-wrap" id="trip-{{ row.trip_id }}">
+        <summary class="row trip-row">
+          <span class="badge t-trip">{{ icon('cart-check', 22) }}</span>
+          <span class="body"><span class="title">{{ t('trip.row_title', list=row.list_name) }}</span>
+            <span class="detail">{{ t('expense.paid_by', name=row.payer_name) }} · {{ date(row.spent_on) }} · {{ tn('trip.expense_count', row.expenses | length) }}</span></span>
+          <span class="side"><span class="amount">{{ money(row.total_cents) }}</span><span class="party">{{ viewer_text(row.viewer) }}</span></span>
+          <span class="chev">{{ icon('chevron-down') }}</span>
+        </summary>
+        <div class="trip-children">{% for child in row.expenses %}{{ expense_row(child) }}{% endfor %}</div>
+      </details>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">{{ t('expense.none') }}</div>
+  {% endfor %}
+</div>

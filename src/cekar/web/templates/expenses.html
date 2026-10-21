@@ -1,0 +1,16 @@
+{% extends layout %}
+{% from "_macros.html" import members_hint with context %}
+{% block title %}{{ t('nav.expenses') }} - {{ t('app.name') }}{% endblock %}
+{% block content %}
+<div class="page-title"><h1>{{ t('nav.expenses') }}</h1></div>
+{% if trip %}
+<div class="alert success page-alert">{{ icon('check-circle-outline', 20) }}<div class="txt">{{ tn('trip.saved', trip) }}</div></div>
+{% endif %}
+{% if members | length < 2 %}{{ members_hint(request) }}{% endif %}
+{% include "expenses_live.html" %}
+{% endblock %}
+{% block fab %}
+{% if members | length >= 2 %}
+<a class="fab" href="{{ url(request, '/expenses/new') }}" data-dialog aria-label="{{ t('expense.add') }}">{{ icon('plus', 26) }}</a>
+{% endif %}
+{% endblock %}

@@ -8,24 +8,54 @@
   <script src="{{ url(request, '/static/theme.js') }}"></script>
   <link rel="stylesheet" href="{{ url(request, '/static/app.css') }}">
 </head>
-<body>
+<body data-sprite="{{ url(request, '/static/icons.svg') }}">
   <header class="app-header">
-    <a class="brand" href="{{ url(request, '/') }}">{{ icon('basket', 26) }}<span>{{ t('app.name') }}</span></a>
+    <a class="brand" href="{{ url(request, '/') }}">{{ icon('basket', 28) }}<span>{{ t('app.name') }}</span></a>
+    {% if user %}
     <nav class="tabs" aria-label="{{ t('nav.sections') }}">
-      <a class="tab {{ 'active' if section == 'lists' }}" href="{{ url(request, '/') }}">{{ t('nav.lists') }}</a>
-      <a class="tab {{ 'active' if section == 'expenses' }}" href="{{ url(request, '/expenses') }}">{{ t('nav.expenses') }}</a>
+      <a class="tab {{ 'active' if section == 'lists' }}" href="{{ url(request, '/') }}">{{ icon('format-list-checks', 20) }}{{ t('nav.lists') }}</a>
+      <a class="tab {{ 'active' if section == 'expenses' }}" href="{{ url(request, '/expenses') }}">{{ icon('receipt-text-outline', 20) }}{{ t('nav.expenses') }}</a>
+      <a class="tab {{ 'active' if section == 'settings' }}" href="{{ url(request, '/settings') }}">{{ icon('cog-outline', 20) }}{{ t('nav.settings') }}</a>
     </nav>
+    <div class="spacer"></div>
+    <details class="user-wrap">
+      <summary class="icon-btn user-btn" aria-label="{{ t('nav.user_menu') }}">{{ user.display_name[:1] | upper }}</summary>
+      <div class="popover">
+        <div class="user-menu-name">{{ user.display_name }}</div>
+        <div class="user-menu-sub">
+          {{ t('user.via_ha') if via_ha(request) else t('user.picked') }}{% if not user.is_member %} · {{ t('user.not_member') }}{% endif %}
+        </div>
+        {% if not via_ha(request) %}
+        <form method="post" action="{{ url(request, '/who/switch') }}">
+          <button type="submit" class="menu-btn">{{ icon('account-switch', 20) }}{{ t('user.switch_person') }}</button>
+        </form>
+        {% endif %}
+      </div>
+    </details>
+    {% endif %}
   </header>
 
   <main>
     {% block content %}{% endblock %}
   </main>
 
+  {% block fab %}{% endblock %}
+  {% if user %}
   <nav class="bottom-nav" aria-label="{{ t('nav.sections') }}">
-    <a class="{{ 'active' if section == 'lists' }}" href="{{ url(request, '/') }}"><span class="pill">{{ icon('cart') }}</span>{{ t('nav.lists') }}</a>
-    <a class="{{ 'active' if section == 'expenses' }}" href="{{ url(request, '/expenses') }}"><span class="pill">{{ icon('cash') }}</span>{{ t('nav.expenses') }}</a>
+    <a class="{{ 'active' if section == 'lists' }}" href="{{ url(request, '/') }}"><span class="pill">{{ icon('format-list-checks', 22) }}</span>{{ t('nav.lists') }}</a>
+    <a class="{{ 'active' if section == 'expenses' }}" href="{{ url(request, '/expenses') }}"><span class="pill">{{ icon('receipt-text-outline', 22) }}</span>{{ t('nav.expenses') }}</a>
+    <a class="{{ 'active' if section == 'settings' }}" href="{{ url(request, '/settings') }}"><span class="pill">{{ icon('cog-outline', 22) }}</span>{{ t('nav.settings') }}</a>
   </nav>
+  {% endif %}
   <div id="overlay"></div>
+  {% set undo = undo_info(request) %}
+  {% if undo %}
+  <div class="snackbar" id="snackbar" role="status" data-return="{{ query_url(request, undo=None, id=None, name=None) }}">
+    <span class="msg">{{ undo.message }}</span>
+    <form method="post" action="{{ url(request, undo.restore) }}"><button type="submit">{{ t('common.undo') }}</button></form>
+    <a class="icon-btn" href="{{ query_url(request, undo=None, id=None, name=None) }}" data-snack-close aria-label="{{ t('common.close') }}">{{ icon('close', 20) }}</a>
+  </div>
+  {% endif %}
   <script src="{{ url(request, '/static/app.js') }}" defer></script>
 </body>
 </html>

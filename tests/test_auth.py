@@ -29,7 +29,7 @@ def test_addon_rejects_other_addresses(engine, tmp_path):
 
 def test_addon_accepts_ingress_proxy_without_login(engine, tmp_path):
     c = make_client(engine, tmp_path, mode=Mode.ADDON, host=INGRESS_PROXY_ADDRESS)
-    assert c.get("/").status_code == 200
+    assert c.get("/who").status_code == 200
     assert c.get("/api/v1/health").status_code == 200
 
 
@@ -37,7 +37,7 @@ def test_addon_ignores_password_and_has_no_login(engine, tmp_path):
     c = make_client(
         engine, tmp_path, mode=Mode.ADDON, host=INGRESS_PROXY_ADDRESS, password="pw"
     )
-    assert c.get("/").status_code == 200
+    assert c.get("/who").status_code == 200
     assert c.get("/login").status_code == 404
 
 
@@ -47,7 +47,7 @@ def test_no_password_open_and_warns(engine, tmp_path, caplog):
     with caplog.at_level(logging.WARNING, logger="cekar.auth"):
         c = make_client(engine, tmp_path)
     assert "CEKAR_PASSWORD" in caplog.text
-    assert c.get("/").status_code == 200
+    assert c.get("/who").status_code == 200
     assert c.get("/api/v1/health").status_code == 200
 
 
@@ -78,7 +78,7 @@ def test_login_logout_cycle(engine, tmp_path):
     r = c.post("/login", data={"password": "pw"})
     assert r.status_code == 303 and SESSION_COOKIE in r.cookies
     assert "httponly" in r.headers["set-cookie"].lower()
-    assert c.get("/").status_code == 200
+    assert c.get("/who").status_code == 200
     c.post("/logout")
     assert c.get("/").status_code == 303
 
@@ -113,7 +113,7 @@ def test_api_missing_token_401(engine, tmp_path):
     r = c.get("/api/v1/health")
     assert r.status_code == 401
     assert r.headers["content-type"].startswith("application/json")
-    assert c.get("/").status_code == 200  # HTML unaffected without a password
+    assert c.get("/who").status_code == 200  # HTML unaffected without a password
 
 
 def test_api_bearer_token(engine, tmp_path):
@@ -184,7 +184,7 @@ def test_ingress_listener_unchanged_with_api_enabled(engine, tmp_path):
     other = make_client(engine, tmp_path, host="192.168.1.5", **kw)
     assert other.get("/api/v1/health", headers=bearer()).status_code == 403
     proxy = make_client(engine, tmp_path, host=INGRESS_PROXY_ADDRESS, **kw)
-    assert proxy.get("/").status_code == 200
+    assert proxy.get("/who").status_code == 200
     assert proxy.get("/api/v1/health").status_code == 200
 
 

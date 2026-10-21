@@ -1,8 +1,14 @@
 {# Shared template macros. Every URL goes through url(request, ...). #}
 
+{# Alert blocks: errors and warnings above a form, success after an action. #}
 {% macro messages(errors=None, warnings=None) %}
-  {% for message in errors or [] %}<p class="alert error" role="alert">{{ message }}</p>{% endfor %}
-  {% for message in warnings or [] %}<p class="alert warning">{{ message }}</p>{% endfor %}
+  {% for message in errors or [] %}<div class="alert error" role="alert">{{ icon('alert-outline', 20) }}<div class="txt">{{ message }}</div></div>{% endfor %}
+  {% for message in warnings or [] %}<div class="alert warning">{{ icon('alert-outline', 20) }}<div class="txt">{{ message }}</div></div>{% endfor %}
+{% endmacro %}
+
+{# Round avatar with the person's initial; colour is stable per person. #}
+{% macro avatar(person, size='') %}
+  <span class="avatar {{ size }} c{{ avatar_color(person.id) }}" aria-hidden="true">{{ person.display_name[:1] | upper }}</span>
 {% endmacro %}
 
 {# Filled text field. #}
@@ -52,15 +58,15 @@
 {# Head of a dialog: close link (works without the page script) and title. #}
 {% macro dialog_head(request, title, close_path='/') %}
   <div class="dialog-head">
-    <a class="icon-btn" href="{{ url(request, close_path) }}" data-close aria-label="Close">{{ icon('close', 24) }}</a>
+    <a class="icon-btn" href="{{ url(request, close_path) }}" data-close aria-label="{{ t('common.close') }}">{{ icon('close', 24) }}</a>
     <h3>{{ title }}</h3>
   </div>
 {% endmacro %}
 
 {# HA sub-page header: round back button left of the title. #}
-{% macro page_head(request, title, parent_path='/', parent_label='Lists') %}
+{% macro page_head(request, title, parent_path='/', parent_label='') %}
   <div class="page-head">
-    <a class="icon-btn" href="{{ url(request, parent_path) }}" aria-label="Back to {{ parent_label }}">{{ icon('arrow-left', 24) }}</a>
+    <a class="icon-btn" href="{{ url(request, parent_path) }}" aria-label="{{ t('common.back_to', parent=parent_label) }}">{{ icon('arrow-left', 24) }}</a>
     <h1>{{ title }}</h1>
   </div>
 {% endmacro %}
@@ -71,4 +77,40 @@
     <button type="submit" class="btn outline"
       {%- if confirm_text %} data-confirm="{{ confirm_text }}"{% endif %}>{{ label }}</button>
   </form>
+{% endmacro %}
+
+{# A form dialog: scrim, head with close link, then the caller's body and foot. #}
+{% macro dialog(request, title, action, close_path='/', extra='') %}
+<div class="scrim" data-scrim>
+<form class="dialog form" method="post" role="dialog" aria-label="{{ title }}" action="{{ url(request, action) }}" {{ extra | safe }}>
+  {{ dialog_head(request, title, close_path) }}
+  {{ caller() }}
+</form>
+</div>
+{% endmacro %}
+
+{# A confirm dialog: title, one paragraph (the caller) and the foot the caller adds. #}
+{% macro confirm_dialog(request, title, action) %}
+<div class="scrim" data-scrim>
+<form class="dialog confirm" method="post" role="dialog" aria-label="{{ title }}" action="{{ url(request, action) }}">
+  <h3>{{ title }}</h3>
+  {{ caller() }}
+</form>
+</div>
+{% endmacro %}
+
+{# Foot of a form dialog: Cancel (a real link) and the main action. #}
+{% macro dialog_foot(request, close_path, label) %}
+  <div class="dialog-foot">
+    <a class="btn" href="{{ url(request, close_path) }}" data-close>{{ t('common.cancel') }}</a>
+    <button type="submit" class="btn primary">{{ label }}</button>
+  </div>
+{% endmacro %}
+
+{# "Only fewer than two members": a hint instead of the form, with a button to Settings. #}
+{% macro members_hint(request) %}
+  <div class="card hint-card">
+    <p><b>{{ t('members.too_few') }}</b><br>{{ t('members.too_few_help') }}</p>
+    <a class="btn primary" href="{{ url(request, '/settings') }}">{{ t('members.open_settings') }}</a>
+  </div>
 {% endmacro %}

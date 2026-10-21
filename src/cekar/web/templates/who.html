@@ -1,0 +1,24 @@
+{% extends layout %}
+{% from "_macros.html" import messages, field, avatar with context %}
+{% block title %}{{ t('who.title') }} - {{ t('app.name') }}{% endblock %}
+{% block content %}
+<div class="page-title"><h1>{{ t('who.title') }}</h1></div>
+<div class="help flush">{{ t('who.help') }}</div>
+<div class="card list-card">
+  {% for p in people %}
+  <form class="row" method="post" action="{{ url(request, '/who') }}">
+    <input type="hidden" name="user_id" value="{{ p.id }}">
+    <button type="submit" class="row-link">
+      {{ avatar(p) }}
+      <span class="body"><span class="title">{{ p.display_name }}</span><span class="detail">{{ t('who.member') if p.is_member else t('user.not_member') }}</span></span>
+    </button>
+  </form>
+  {% endfor %}
+</div>
+<div class="summary-head"><h2>{{ t('who.new_title') }}</h2></div>
+<form class="card form" method="post" action="{{ url(request, '/who/add') }}">
+  {{ messages(errors) }}
+  {{ field(t('settings.person_name'), 'name', typed_name, required=True) }}
+  <div class="dialog-foot"><button type="submit" class="btn primary">{{ t('who.add') }}</button></div>
+</form>
+{% endblock %}

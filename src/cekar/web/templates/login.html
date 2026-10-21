@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ t('login.title') }} - {{ t('app.name') }}</title>
+<script src="{{ url(request, '/static/theme.js') }}"></script>
+<link rel="stylesheet" href="{{ url(request, '/static/app.css') }}">
+</head>
+<body>
+<main class="login">
+  <h1>{{ t('app.name') }}</h1>
+  <form class="card card-pad stack" method="post" action="{{ url(request, '/login') }}">
+    {% if error %}<div class="alert error" role="alert">{{ icon('alert-outline', 20) }}<div class="txt">{{ error }}</div></div>{% endif %}
+    <div class="field"><label for="i-password">{{ t('login.password') }}</label>
+      <input id="i-password" type="password" name="password" required autofocus></div>
+    <div><button type="submit" class="btn primary">{{ t('login.submit') }}</button></div>
+  </form>
+</main>
+</body>
+</html>

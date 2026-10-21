@@ -10,18 +10,24 @@ at the end); checked items by ``checked_at``, newest first.
 
 from __future__ import annotations
 
+import unicodedata
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Literal
 
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from cekar.models import Item, ShoppingList
+from cekar.models import Item, ShoppingList, User, UserPreference, utc_now
+from cekar.services import ServiceError, sync
 
 LIST_NAME_MAX_LENGTH = 50
 ITEM_NAME_MAX_LENGTH = 100
 QUANTITY_MAX_LENGTH = 30
+
+# Key of the ``user_preference`` row (same value as ``members.LAST_LIST_ID``).
+LAST_LIST_ID = "last_list_id"
 
 
 @dataclass(frozen=True)
@@ -75,14 +81,91 @@ def normalise_name(name: str) -> str:
     whitespace collapsed to single spaces and trimmed: ``"  Čaj  Zeleni"``
     gives ``"caj zeleni"``.
     """
-    raise NotImplementedError
+    decomposed = unicodedata.normalize("NFKD", name)
+    stripped = "".join(c for c in decomposed if not unicodedata.combining(c))
+    return " ".join(stripped.casefold().split())
+
+
+# --- helpers -------------------------------------------------------------------
+
+def _clean_list_name(name: str) -> str:
+    """Return the trimmed list name or raise the name error."""
+    name = name.strip()
+    if not name:
+        raise ServiceError("error.list.name_required")
+    if len(name) > LIST_NAME_MAX_LENGTH:
+        raise ServiceError("error.list.name_too_long", max_length=LIST_NAME_MAX_LENGTH)
+    return name
+
+
+def _clean_item_fields(
+    session: Session, name: str, quantity: str | None, for_whom_id: str | None
+) -> tuple[str, str | None]:
+    """Validate and trim the item fields; return ``(name, quantity)``."""
+    name = name.strip()
+    if not name:
+        raise ServiceError("error.item.name_required")
+    if len(name) > ITEM_NAME_MAX_LENGTH:
+        raise ServiceError("error.item.name_too_long", max_length=ITEM_NAME_MAX_LENGTH)
+    quantity = (quantity or "").strip() or None
+    if quantity is not None and len(quantity) > QUANTITY_MAX_LENGTH:
+        raise ServiceError("error.item.quantity_too_long", max_length=QUANTITY_MAX_LENGTH)
+    if for_whom_id is not None:
+        user = session.get(User, for_whom_id)
+        if user is None or user.deleted_at is not None or not user.is_member:
+            raise ServiceError("error.item.for_whom_not_member")
+    return name, quantity
+
+
+def _next_position(session: Session, column, *conditions) -> int:
+    """Return one more than the largest live position under ``conditions``."""
+    query = select(func.max(column)).where(*conditions)
+    highest = session.scalar(query)
+    return 0 if highest is None else highest + 1
+
+
+def _apply_order(rows: list, ids: Sequence[str], session: Session) -> None:
+    """
+    Renumber ``rows`` (in their current order) so the named ids come first.
+
+    Only rows whose position changes are written.
+    """
+    by_id = {row.id: row for row in rows}
+    named = [by_id[i] for i in dict.fromkeys(ids) if i in by_id]
+    named_ids = {row.id for row in named}
+    ordered = named + [row for row in rows if row.id not in named_ids]
+    for position, row in enumerate(ordered):
+        if row.position != position:
+            row.position = position
+            sync.touch(row, session)
+
+
+def _unchecked_items(session: Session, list_id: str) -> list[Item]:
+    query = sync.live(
+        select(Item).where(
+            Item.list_id == list_id, Item.checked_at.is_(None), Item.cleared_at.is_(None)
+        )
+    ).order_by(Item.position, Item.created_at)
+    return list(session.scalars(query))
+
+
+def _checked_items(session: Session, list_id: str) -> list[Item]:
+    query = sync.live(
+        select(Item).where(
+            Item.list_id == list_id, Item.checked_at.is_not(None), Item.cleared_at.is_(None)
+        )
+    ).order_by(Item.checked_at.desc(), Item.created_at.desc())
+    return list(session.scalars(query))
 
 
 # --- lists ---------------------------------------------------------------------
 
 def all_lists(session: Session) -> list[ShoppingList]:
     """Return live lists by ``position``, then ``created_at``."""
-    raise NotImplementedError
+    query = sync.live(select(ShoppingList)).order_by(
+        ShoppingList.position, ShoppingList.created_at
+    )
+    return list(session.scalars(query))
 
 
 def get_list(session: Session, list_id: str) -> ShoppingList:
@@ -94,7 +177,10 @@ def get_list(session: Session, list_id: str) -> ShoppingList:
     ServiceError
         ``error.not_found``.
     """
-    raise NotImplementedError
+    shopping = session.get(ShoppingList, list_id)
+    if shopping is None or shopping.deleted_at is not None:
+        raise ServiceError("error.not_found")
+    return shopping
 
 
 def start_list(session: Session, actor_id: str, default_name: str) -> ShoppingList:
@@ -105,7 +191,22 @@ def start_list(session: Session, actor_id: str, default_name: str) -> ShoppingLi
     first list. When no live list exists, creates one named ``default_name``
     (the web layer passes the translated "Shopping").
     """
-    raise NotImplementedError
+    preference = _preference(session, actor_id)
+    if preference is not None and preference.value:
+        remembered = session.get(ShoppingList, preference.value)
+        if remembered is not None and remembered.deleted_at is None:
+            return remembered
+    lists = all_lists(session)
+    if lists:
+        return lists[0]
+    return create_list(session, actor_id, default_name)
+
+
+def _preference(session: Session, user_id: str) -> UserPreference | None:
+    query = sync.live(select(UserPreference)).where(
+        UserPreference.user_id == user_id, UserPreference.key == LAST_LIST_ID
+    )
+    return session.scalars(query).first()
 
 
 def open_list(session: Session, actor_id: str, list_id: str) -> ShoppingList:
@@ -119,7 +220,16 @@ def open_list(session: Session, actor_id: str, list_id: str) -> ShoppingList:
     ServiceError
         ``error.not_found``.
     """
-    raise NotImplementedError
+    shopping = get_list(session, list_id)
+    preference = _preference(session, actor_id)
+    if preference is None:
+        sync.touch(
+            UserPreference(user_id=actor_id, key=LAST_LIST_ID, value=list_id), session
+        )
+    elif preference.value != list_id:
+        preference.value = list_id
+        sync.touch(preference, session)
+    return shopping
 
 
 def create_list(
@@ -133,7 +243,17 @@ def create_list(
     ServiceError
         ``error.list.name_required``; ``error.list.name_too_long`` (``max_length``).
     """
-    raise NotImplementedError
+    if row_id is not None:
+        existing = session.get(ShoppingList, row_id)
+        if existing is not None:
+            return existing
+    name = _clean_list_name(name)
+    position = _next_position(
+        session, ShoppingList.position, ShoppingList.deleted_at.is_(None)
+    )
+    shopping = ShoppingList(id=row_id, name=name, position=position)
+    sync.touch(shopping, session)
+    return shopping
 
 
 def rename_list(session: Session, actor_id: str, list_id: str, name: str) -> ShoppingList:
@@ -145,7 +265,12 @@ def rename_list(session: Session, actor_id: str, list_id: str, name: str) -> Sho
     ServiceError
         ``error.not_found`` and the ``create_list`` name errors.
     """
-    raise NotImplementedError
+    shopping = get_list(session, list_id)
+    name = _clean_list_name(name)
+    if shopping.name != name:
+        shopping.name = name
+        sync.touch(shopping, session)
+    return shopping
 
 
 def reorder_lists(session: Session, actor_id: str, list_ids: Sequence[str]) -> None:
@@ -156,7 +281,7 @@ def reorder_lists(session: Session, actor_id: str, list_ids: Sequence[str]) -> N
     relative order after the named ones. Only lists whose position changes
     are written.
     """
-    raise NotImplementedError
+    _apply_order(all_lists(session), list_ids, session)
 
 
 def delete_list(session: Session, actor_id: str, list_id: str) -> ShoppingList:
@@ -170,7 +295,9 @@ def delete_list(session: Session, actor_id: str, list_id: str) -> ShoppingList:
     ServiceError
         ``error.not_found``.
     """
-    raise NotImplementedError
+    shopping = get_list(session, list_id)
+    sync.soft_delete(shopping, session)
+    return shopping
 
 
 def restore_list(session: Session, actor_id: str, list_id: str) -> ShoppingList:
@@ -183,7 +310,11 @@ def restore_list(session: Session, actor_id: str, list_id: str) -> ShoppingList:
     ServiceError
         ``error.not_found`` when the list does not exist or is not deleted.
     """
-    raise NotImplementedError
+    shopping = session.get(ShoppingList, list_id)
+    if shopping is None or shopping.deleted_at is None:
+        raise ServiceError("error.not_found")
+    sync.restore(shopping, session)
+    return shopping
 
 
 def list_version(session: Session, list_id: str) -> int:
@@ -191,7 +322,24 @@ def list_version(session: Session, list_id: str) -> int:
     Return the largest ``seq`` over the list and all its items, tombstones
     included (so deletes change the version too). 0 for an unknown list.
     """
-    raise NotImplementedError
+    list_seq = session.scalar(select(func.max(ShoppingList.seq)).where(ShoppingList.id == list_id))
+    item_seq = session.scalar(select(func.max(Item.seq)).where(Item.list_id == list_id))
+    return max(list_seq or 0, item_seq or 0)
+
+
+def _item_view(session: Session, item: Item) -> ItemView:
+    for_whom = session.get(User, item.for_whom_id) if item.for_whom_id else None
+    added_by = session.get(User, item.added_by_id)
+    return ItemView(
+        id=item.id,
+        name=item.name,
+        quantity=item.quantity,
+        for_whom_id=item.for_whom_id,
+        for_whom_name=for_whom.display_name if for_whom else None,
+        added_by_id=item.added_by_id,
+        added_by_name=added_by.display_name,
+        checked_at=item.checked_at,
+    )
 
 
 def list_view(session: Session, list_id: str) -> ListView:
@@ -203,7 +351,13 @@ def list_view(session: Session, list_id: str) -> ListView:
     ServiceError
         ``error.not_found``.
     """
-    raise NotImplementedError
+    shopping = get_list(session, list_id)
+    return ListView(
+        list=shopping,
+        unchecked=[_item_view(session, i) for i in _unchecked_items(session, list_id)],
+        checked=[_item_view(session, i) for i in _checked_items(session, list_id)],
+        version=list_version(session, list_id),
+    )
 
 
 # --- items ---------------------------------------------------------------------
@@ -217,7 +371,10 @@ def get_item(session: Session, item_id: str) -> Item:
     ServiceError
         ``error.not_found``.
     """
-    raise NotImplementedError
+    item = session.get(Item, item_id)
+    if item is None or item.deleted_at is not None:
+        raise ServiceError("error.not_found")
+    return item
 
 
 def add_item(
@@ -248,7 +405,51 @@ def add_item(
         ``error.item.quantity_too_long`` (``max_length``);
         ``error.item.for_whom_not_member``.
     """
-    raise NotImplementedError
+    get_list(session, list_id)
+    if row_id is not None:
+        repeated = session.get(Item, row_id)
+        if repeated is not None:
+            return AddItemResult(item=repeated, outcome="existing")
+    name, quantity = _clean_item_fields(session, name, quantity, for_whom_id)
+    name_key = normalise_name(name)
+    matches = list(
+        session.scalars(
+            sync.live(
+                select(Item).where(
+                    Item.list_id == list_id,
+                    Item.name_key == name_key,
+                    Item.cleared_at.is_(None),
+                )
+            ).order_by(Item.created_at)
+        )
+    )
+    for match in matches:
+        if match.checked_at is None:
+            return AddItemResult(item=match, outcome="existing")
+    if matches:
+        match = matches[0]
+        match.checked_at = None
+        match.checked_by_id = None
+        sync.touch(match, session)
+        return AddItemResult(item=match, outcome="unchecked")
+    position = _next_position(
+        session,
+        Item.position,
+        Item.list_id == list_id,
+        Item.deleted_at.is_(None),
+    )
+    item = Item(
+        id=row_id,
+        list_id=list_id,
+        name=name,
+        name_key=name_key,
+        quantity=quantity,
+        for_whom_id=for_whom_id,
+        added_by_id=actor_id,
+        position=position,
+    )
+    sync.touch(item, session)
+    return AddItemResult(item=item, outcome="added")
 
 
 def update_item(
@@ -269,7 +470,15 @@ def update_item(
     ServiceError
         ``error.not_found`` and the ``add_item`` field errors.
     """
-    raise NotImplementedError
+    item = get_item(session, item_id)
+    name, quantity = _clean_item_fields(session, name, quantity, for_whom_id)
+    if (item.name, item.quantity, item.for_whom_id) != (name, quantity, for_whom_id):
+        item.name = name
+        item.name_key = normalise_name(name)
+        item.quantity = quantity
+        item.for_whom_id = for_whom_id
+        sync.touch(item, session)
+    return item
 
 
 def set_checked(session: Session, actor_id: str, item_id: str, checked: bool) -> Item:
@@ -284,7 +493,18 @@ def set_checked(session: Session, actor_id: str, item_id: str, checked: bool) ->
     ServiceError
         ``error.not_found`` (also for cleared items).
     """
-    raise NotImplementedError
+    item = get_item(session, item_id)
+    if item.cleared_at is not None:
+        raise ServiceError("error.not_found")
+    if checked and item.checked_at is None:
+        item.checked_at = utc_now()
+        item.checked_by_id = actor_id
+        sync.touch(item, session)
+    elif not checked and item.checked_at is not None:
+        item.checked_at = None
+        item.checked_by_id = None
+        sync.touch(item, session)
+    return item
 
 
 def reorder_items(
@@ -301,7 +521,8 @@ def reorder_items(
     ServiceError
         ``error.not_found`` (list).
     """
-    raise NotImplementedError
+    get_list(session, list_id)
+    _apply_order(_unchecked_items(session, list_id), item_ids, session)
 
 
 def clear_checked(session: Session, actor_id: str, list_id: str) -> int:
@@ -315,7 +536,13 @@ def clear_checked(session: Session, actor_id: str, list_id: str) -> int:
     ServiceError
         ``error.not_found`` (list).
     """
-    raise NotImplementedError
+    get_list(session, list_id)
+    items = _checked_items(session, list_id)
+    stamp = utc_now()
+    for item in items:
+        item.cleared_at = stamp
+        sync.touch(item, session)
+    return len(items)
 
 
 def checked_items(session: Session, list_id: str) -> list[Item]:
@@ -328,7 +555,8 @@ def checked_items(session: Session, list_id: str) -> list[Item]:
     ServiceError
         ``error.not_found`` (list).
     """
-    raise NotImplementedError
+    get_list(session, list_id)
+    return _checked_items(session, list_id)
 
 
 def delete_item(session: Session, actor_id: str, item_id: str) -> Item:
@@ -340,7 +568,9 @@ def delete_item(session: Session, actor_id: str, item_id: str) -> Item:
     ServiceError
         ``error.not_found``.
     """
-    raise NotImplementedError
+    item = get_item(session, item_id)
+    sync.soft_delete(item, session)
+    return item
 
 
 def restore_item(session: Session, actor_id: str, item_id: str) -> Item:
@@ -353,4 +583,9 @@ def restore_item(session: Session, actor_id: str, item_id: str) -> Item:
         ``error.not_found`` when the item does not exist or is not deleted,
         or its list is deleted.
     """
-    raise NotImplementedError
+    item = session.get(Item, item_id)
+    if item is None or item.deleted_at is None:
+        raise ServiceError("error.not_found")
+    get_list(session, item.list_id)
+    sync.restore(item, session)
+    return item

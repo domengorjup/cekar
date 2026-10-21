@@ -40,69 +40,69 @@
 
 ## 2. UI mockup and design language (parallel with 1; owns `.mockups/ui-v1/`, `docs/dev/design.md`)
 
-- [ ] 2.1 Copy glovebox's design tokens and the standard elements that apply into `docs/dev/design.md` (adapted names; the skeleton already has a first copy, so check and extend it).
+- [x] 2.1 Copy glovebox's design tokens and the standard elements that apply into `docs/dev/design.md` (adapted names; the skeleton already has a first copy, so check and extend it).
 - [ ] 2.2 Build a clickable static mockup in `.mockups/ui-v1/` (open `index.html` directly, no server): list page with add field and suggestions, checked section, list switcher; add-expense form with the four split choices and paid-by dropdown; expense list with a collapsed trip row; balances with settle up; "Done shopping" form; Settings with member switches; "Who are you?" picker; user menu (switch person, no language switch). English only.
 - [ ] 2.3 Screenshot it headless (desktop 1400x900, phone 390x844, light and dark). Record decisions in `.mockups/ui-v1/NOTES.md`.
-- [ ] 2.3a Add the delete snackbar ("Deleted <thing> · Undo", about 10 s, plus the no-JS Undo `post_button` on the redirect target) to the mockup and to `docs/dev/design.md` as a new repeated element.
+- [x] 2.3a Add the delete snackbar ("Deleted <thing> · Undo", about 10 s, plus the no-JS Undo `post_button` on the redirect target) to the mockup and to `docs/dev/design.md` as a new repeated element.
 - [ ] 2.4 (done: the user approved `.mockups/ui-v1/`; any later change is recorded in its `NOTES.md`.) Get the user's feedback, iterate, and mark the approved version in `NOTES.md`. Add every new repeated element to `docs/dev/design.md`.
 
 ## 3. Identity, access and members (needs 0 and 1; owns `identity.py`, `auth.py`, `services/members.py`, `tests/test_identity.py`, `tests/test_members.py`)
 
-- [ ] 3.1 Implement `auth.py`: add-on source check (Ingress proxy only, else 403; record the HA doc source in a comment), standalone password login with signed session cookie, startup warning without password.
-- [ ] 3.2 Implement `identity.py` per design D2: headers first, then the signed identity cookie, else redirect to the picker; auto-registration and display-name update through `services/members.py`.
-- [ ] 3.3 Implement `services/members.py`: register/update HA users, add a person by name, set membership (records `member_since`), list members in display order, user preferences (`last_list_id`), the open-balance check used by the "remove member" warning (calls `balances.pair_balances`).
-- [ ] 3.4 Write tests for every scenario in the web-access and household-members specs.
+- [x] 3.1 Implement `auth.py`: add-on source check (Ingress proxy only, else 403; record the HA doc source in a comment), standalone password login with signed session cookie, startup warning without password.
+- [x] 3.2 Implement `identity.py` per design D2: headers first, then the signed identity cookie, else redirect to the picker; auto-registration and display-name update through `services/members.py`.
+- [x] 3.3 Implement `services/members.py`: register/update HA users, add a person by name, set membership (records `member_since`), list members in display order, user preferences (`last_list_id`), the open-balance check used by the "remove member" warning (calls `balances.pair_balances`).
+- [x] 3.4 Write tests for every scenario in the web-access and household-members specs.
 
 ## 4. Shopping lists and suggestions (needs 1; owns `services/lists.py`, `services/suggestions.py`, `tests/test_lists.py`, `tests/test_suggestions.py`)
 
-- [ ] 4.1 Implement list CRUD, reorder, soft delete with item tombstones, `restore_list` and `restore_item` (undo, via `sync.restore`), default list on first use.
-- [ ] 4.2 Implement item add/edit/delete, check/uncheck, reorder, clear checked, `name_key` normalisation (case-fold, strip accents, collapse spaces), the re-add rules (no duplicate unchecked; uncheck a checked one).
-- [ ] 4.3 Implement `list_version(list_id)` (largest `seq` over the list and its items, including tombstones).
-- [ ] 4.4 Implement suggestions per design D8 (ranking, 30-day half-life, limit 8, excluding unchecked names on the list); `now` is a parameter for testability.
-- [ ] 4.5 Write tests for every scenario in the shopping-lists spec (service level), including undo of a list that leaves an earlier-deleted item deleted, and the sync-readiness scenarios that touch items.
+- [x] 4.1 Implement list CRUD, reorder, soft delete with item tombstones, `restore_list` and `restore_item` (undo, via `sync.restore`), default list on first use.
+- [x] 4.2 Implement item add/edit/delete, check/uncheck, reorder, clear checked, `name_key` normalisation (case-fold, strip accents, collapse spaces), the re-add rules (no duplicate unchecked; uncheck a checked one).
+- [x] 4.3 Implement `list_version(list_id)` (largest `seq` over the list and its items, including tombstones).
+- [x] 4.4 Implement suggestions per design D8 (ranking, 30-day half-life, limit 8, excluding unchecked names on the list); `now` is a parameter for testability.
+- [x] 4.5 Write tests for every scenario in the shopping-lists spec (service level), including undo of a list that leaves an earlier-deleted item deleted, and the sync-readiness scenarios that touch items.
 
 ## 5. Expenses, balances and payments (needs 1; owns `services/expenses.py`, `services/balances.py`, `tests/test_expenses.py`, `tests/test_balances.py`)
 
-- [ ] 5.1 Implement expense create/edit/delete for the four split methods (design D6), materialising shares; validation keys for amount, exact-sum mismatch, payer and participants must be members, at least two members.
-- [ ] 5.1a Implement `restore_expense` (expense and its shares, via `sync.restore`).
-- [ ] 5.2 Implement payments create/edit/delete, with `restore_payment`, with the over-payment check returned as a warning (not an error).
-- [ ] 5.3 Implement `pair_balances()`, `user_total(user_id)`, and `expenses_version()` (largest `seq` over expenses, shares and payments) per design D7.
-- [ ] 5.4 Implement the expense-list query: expenses and payments newest first, grouped by month and by trip, with the viewer's part.
-- [ ] 5.5 Write tests for every scenario in the expenses and balances-settlement specs, including former members with open balances, undo of an expense (balances return) and undo of a payment.
+- [x] 5.1 Implement expense create/edit/delete for the four split methods (design D6), materialising shares; validation keys for amount, exact-sum mismatch, payer and participants must be members, at least two members.
+- [x] 5.1a Implement `restore_expense` (expense and its shares, via `sync.restore`).
+- [x] 5.2 Implement payments create/edit/delete, with `restore_payment`, with the over-payment check returned as a warning (not an error).
+- [x] 5.3 Implement `pair_balances()`, `user_total(user_id)`, and `expenses_version()` (largest `seq` over expenses, shares and payments) per design D7.
+- [x] 5.4 Implement the expense-list query: expenses and payments newest first, grouped by month and by trip, with the viewer's part.
+- [x] 5.5 Write tests for every scenario in the expenses and balances-settlement specs, including former members with open balances, undo of an expense (balances return) and undo of a payment.
 
 ## 6. Shopping trip (needs 1; codes against 4 and 5; owns `services/trips.py`, `tests/test_trips.py`)
 
-- [ ] 6.1 Implement `trip_form_data(list_id)` (checked items with and without "for whom") and `complete_trip(...)` per design D11, in one transaction: trip row, the for-other, personal and equal expenses (none with zero amount), then clear checked items.
-- [ ] 6.2 Implement the fewer-than-two-members path (clear only).
-- [ ] 6.3 Write tests for every scenario in the shopping-trip spec, including the rollback when a step fails.
+- [x] 6.1 Implement `trip_form_data(list_id)` (checked items with and without "for whom") and `complete_trip(...)` per design D11, in one transaction: trip row, the for-other, personal and equal expenses (none with zero amount), then clear checked items.
+- [x] 6.2 Implement the fewer-than-two-members path (clear only).
+- [x] 6.3 Write tests for every scenario in the shopping-trip spec, including the rollback when a step fails.
 
 ## 7. i18n machinery and formatting (needs 1; owns `i18n.py`, `web/formatting.py`, `tests/test_i18n.py`, `tests/test_formatting.py`)
 
-- [ ] 7.1 Implement catalog loading (`tomllib`), `t` with placeholder substitution, and a generic `tn` with a per-language plural rule table holding only the English rule now (design D10).
-- [ ] 7.2 Implement `money(cents)` (`€42.10`) and `date(d)` (`21 Oct 2026`) in `web/formatting.py` per the i18n spec; month names come from the catalog.
-- [ ] 7.3 Bind `t`, `tn`, `money` and `date` as Jinja2 globals.
-- [ ] 7.4 Write the catalog tests: every key used in `templates/` and `src/` exists (scan for `t("...")`/`tn("...")`), plural keys have `one` and `other`, placeholders match. Plus tests for every i18n spec scenario.
+- [x] 7.1 Implement catalog loading (`tomllib`), `t` with placeholder substitution, and a generic `tn` with a per-language plural rule table holding only the English rule now (design D10).
+- [x] 7.2 Implement `money(cents)` (`€42.10`) and `date(d)` (`21 Oct 2026`) in `web/formatting.py` per the i18n spec; month names come from the catalog.
+- [x] 7.3 Bind `t`, `tn`, `money` and `date` as Jinja2 globals.
+- [x] 7.4 Write the catalog tests: every key used in `templates/` and `src/` exists (scan for `t("...")`/`tn("...")`), plural keys have `one` and `other`, placeholders match. Plus tests for every i18n spec scenario.
 
 ## 8. Web UI (needs 1 and the approved mockup from 2; owns `web/*.py` except `common.py`/`templating.py` after group 1, `templates/`, `static/`, `i18n/en.toml`, `tests/test_web_*.py`, `tests/test_e2e.py`)
 
-- [ ] 8.0 Build the app shell per design D18: tabs Lists / Expenses / Settings (bottom navigation on phones), following `.mockups/ui-v1/` and its `NOTES.md`. Stats (v1.1) is not built.
-- [ ] 8.1 Vendor static assets: own `app.css` (HA-named variables), `app.js`, `theme.js` (HA theme inheritance as in the design doc), `icons.svg` with the used MDI icons and their licence. Test: no external hosts in any page.
-- [ ] 8.2 Build the "Who are you?" picker, the standalone login page, the user menu (switch person; no language switch).
-- [ ] 8.3 Build the list page: list switcher, add field with live suggestions (`/lists/{id}/suggest`), add field with the inline quantity box and "for" person toggle (tap cycles shared and members, picker with 3 or more members, both reset after each add), list switcher as chips (horizontal scroll), items with quantity and "for whom", one-tap check, collapsed checked section, clear checked, item edit dialog, drag reorder, polling `/lists/{id}/version` with Page Visibility (design D9).
-- [ ] 8.4 Build the expense pages: add/edit form with paid-by dropdown and the four one-tap split choices (live "left" amount for exact), expense list with each trip as one collapsed row (badge, list name, trip total) that expands to its expenses, plus the viewer's part, delete without confirmation, the fewer-than-two-members hint.
-- [ ] 8.4a Build the delete snackbar (about 10 s, Undo posts to the restore routes) and the no-JS fallback (Undo `post_button` on the redirect target page); confirm dialog only for deleting a whole list; apply to items, lists, expenses and payments. Follows the element added to `docs/dev/design.md` in 2.3a.
-- [ ] 8.5 Build the balances page with pair rows, own total, settle-up form (prefilled, partial, over-payment warning).
-- [ ] 8.6 Build the "Done shopping" form and its confirmation.
-- [ ] 8.7 Build Settings: users with member switches (with the open-balance warning), add person (standalone/picker mode), list management.
-- [ ] 8.8 Add every UI string to the English catalog, including the snackbar strings "Deleted <thing>" and "Undo" (with the thing: item, list, expense, payment) and the member-off warning with the amount.
-- [ ] 8.9 Write template tests: every page renders under root and under an `X-Ingress-Path` prefix with all URLs prefixed, with English strings. Write `test_e2e.py` driving the real forms: add items, check, done shopping, balances, settle up. Write the "no session writes in `web/`" check. Capture screenshots (desktop/phone, light/dark) and compare with the approved mockup.
+- [x] 8.0 Build the app shell per design D18: tabs Lists / Expenses / Settings (bottom navigation on phones), following `.mockups/ui-v1/` and its `NOTES.md`. Stats (v1.1) is not built.
+- [x] 8.1 Vendor static assets: own `app.css` (HA-named variables), `app.js`, `theme.js` (HA theme inheritance as in the design doc), `icons.svg` with the used MDI icons and their licence. Test: no external hosts in any page.
+- [x] 8.2 Build the "Who are you?" picker, the standalone login page, the user menu (switch person; no language switch). (`login.html` is ready; `auth.py` still renders its own inline page until group 3 swaps it in.)
+- [x] 8.3 Build the list page: list switcher, add field with live suggestions (`/lists/{id}/suggest`), add field with the inline quantity box and "for" person toggle (tap cycles shared and members, picker with 3 or more members, both reset after each add), list switcher as chips (horizontal scroll), items with quantity and "for whom", one-tap check, collapsed checked section, clear checked, item edit dialog, drag reorder, polling `/lists/{id}/version` with Page Visibility (design D9).
+- [x] 8.4 Build the expense pages: add/edit form with paid-by dropdown and the four one-tap split choices (live "left" amount for exact), expense list with each trip as one collapsed row (badge, list name, trip total) that expands to its expenses, plus the viewer's part, delete without confirmation, the fewer-than-two-members hint.
+- [x] 8.4a Build the delete snackbar (about 10 s, Undo posts to the restore routes) and the no-JS fallback (Undo `post_button` on the redirect target page); confirm dialog only for deleting a whole list; apply to items, lists, expenses and payments. Follows the element added to `docs/dev/design.md` in 2.3a.
+- [x] 8.5 Build the balances page with pair rows, own total, settle-up form (prefilled, partial, over-payment warning). (Built as the balance card on the Expenses page; there is no separate balances page.)
+- [x] 8.6 Build the "Done shopping" form and its confirmation. (The live "What will be recorded" preview of the mockup is not built; the server checks the prices and the success alert on Expenses is the confirmation.)
+- [x] 8.7 Build Settings: users with member switches (with the open-balance warning), add person (standalone/picker mode), list management.
+- [x] 8.8 Add every UI string to the English catalog, including the snackbar strings "Deleted <thing>" and "Undo" (with the thing: item, list, expense, payment) and the member-off warning with the amount.
+- [x] 8.9 Write template tests: every page renders under root and under an `X-Ingress-Path` prefix with all URLs prefixed, with English strings. Write `test_e2e.py` driving the real forms: add items, check, done shopping, balances, settle up. Write the "no session writes in `web/`" check. Capture screenshots (desktop/phone, light/dark) and compare with the approved mockup.
 
 ## 9. Add-on packaging (needs 1; owns `addon/cekar/`, `Dockerfile`, `docker/`, `repository.yaml`, `api/v1.py`, `tests/test_api.py`)
 
-- [ ] 9.1 Check the skeleton's `Dockerfile` (Python 3.12, `uv` from the lockfile) and the entrypoint that reads the mode (8099 in add-on mode, 8080 standalone, API listener on 8100 when a token is set).
-- [ ] 9.2 Check `addon/cekar/config.yaml` against design D14 (`panel_admin: false`, `mdi:basket`, `8100/tcp: null`, `api_token` the only option, no `homeassistant_api`). Finish `DOCS.md` and `CHANGELOG.md`; add `icon.png` and `logo.png`. Verify keys against the current HA add-on developer docs.
-- [ ] 9.2a Write tests for the optional API listener scenarios in the web-access and ha-addon specs (token required, wrong token, only `/api/v1` served, no token means no listener, short token fails startup).
-- [ ] 9.3 Docker smoke test: build, run standalone, create a list and an expense, restart, data still there.
+- [x] 9.1 Check the skeleton's `Dockerfile` (Python 3.12, `uv` from the lockfile) and the entrypoint that reads the mode (8099 in add-on mode, 8080 standalone, API listener on 8100 when a token is set).
+- [x] 9.2 Check `addon/cekar/config.yaml` against design D14 (`panel_admin: false`, `mdi:basket`, `8100/tcp: null`, `api_token` the only option, no `homeassistant_api`). Finish `DOCS.md` and `CHANGELOG.md`; add `icon.png` and `logo.png`. Verify keys against the current HA add-on developer docs.
+- [x] 9.2a Write tests for the optional API listener scenarios in the web-access and ha-addon specs (token required, wrong token, only `/api/v1` served, no token means no listener, short token fails startup).
+- [x] 9.3 Docker smoke test: build, run standalone, create a list and an expense, restart, data still there.
 
 ## 10. User documentation (after 2; finishes after 8; owns `docs/user/`, `README.md`, `mkdocs.yml`)
 

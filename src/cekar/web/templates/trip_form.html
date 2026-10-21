@@ -1,0 +1,52 @@
+{% extends layout %}
+{% from "_macros.html" import messages, field, select, dialog, confirm_dialog with context %}
+{% block title %}{{ t('trip.title') }} - {{ t('app.name') }}{% endblock %}
+{% block content %}
+{% set close = '/lists/' ~ form.list_id %}
+{% set action = '/lists/' ~ form.list_id ~ '/done' %}
+{% if not form.enough_members %}
+{% call confirm_dialog(request, t('trip.clear_title'), action) %}
+  <p>{{ t('trip.clear_body') }}</p>
+  <div class="dialog-foot">
+    <a class="btn" href="{{ url(request, close) }}" data-close>{{ t('common.cancel') }}</a>
+    <button type="submit" class="btn primary">{{ t('trip.clear_confirm') }}</button>
+  </div>
+{% endcall %}
+{% else %}
+{% call dialog(request, t('trip.title'), action, close) %}
+  <div class="dialog-body">
+    {{ messages(errors) }}
+    <div class="grid2">
+      {{ field(t('trip.total'), 'total', f.total, suffix='€', inputmode='decimal', required=True) }}
+      {{ field(t('common.date'), 'date', f.date, type='date', required=True) }}
+    </div>
+    {% set options = [] %}
+    {% for m in form.members %}{% set _ = options.append((m.id, m.display_name)) %}{% endfor %}
+    {{ select(t('common.paid_by'), 'payer', options, f.payer, required=True) }}
+    {% if form.priced %}
+    <h4>{{ t('trip.priced_title') }}</h4>
+    <div class="help flush">{{ t('trip.priced_help') }}</div>
+    {% for item in form.priced %}
+    <div class="price-row">
+      <div class="nm"><b>{{ item.name }}</b><small>{{ t('item.for_person', name=item.for_whom_name) }}</small></div>
+      {{ field(t('trip.price'), 'price_' ~ item.item_id, f.get('price_' ~ item.item_id, ''), suffix='€', inputmode='decimal') }}
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% if form.shared %}
+    <h4>{{ t('trip.shared_title') }}</h4>
+    <div class="mini-list">
+      {% for item in form.shared %}
+      <div class="mini-row">{{ icon('account-multiple', 20) }}<span class="t">{{ item.name }}{% if item.quantity %} <small>{{ item.quantity }}</small>{% endif %}</span></div>
+      {% endfor %}
+      <div class="sum-line">{{ t('trip.shared_help') }}</div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="dialog-foot">
+    <a class="btn" href="{{ url(request, close) }}" data-close>{{ t('common.cancel') }}</a>
+    <button type="submit" class="btn primary">{{ t('common.confirm') }}</button>
+  </div>
+{% endcall %}
+{% endif %}
+{% endblock %}

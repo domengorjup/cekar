@@ -9,7 +9,7 @@ The web UI follows Home Assistant (HA) and Material conventions, so that it look
 3. **Reuse before adding.** Look through this page first. A new class needs a new entry here; a near-duplicate of an existing element gets merged instead.
 4. **No plain text links for in-app navigation.** Navigate with buttons, icon buttons, list rows, tabs, chips or segmented choices. Plain links are only for external or documentation links inside body text.
 5. **Dialogs are pages first.** Every dialog is a normal server-rendered page; `app.js` only fetches it into `#overlay`. Everything works without JavaScript.
-6. **Numbers never wrap.** Join a number and its unit with a non-breaking space (`with_unit`, `money`) and use `white-space: nowrap` on values.
+6. **Numbers never wrap.** Money comes from `money` (`€42.10`, one token) and values use `white-space: nowrap`.
 7. **Every URL goes through `url(request, ...)`** so Ingress prefixes work.
 
 ## Tokens
@@ -44,15 +44,15 @@ Section headings are plain `<h2>`; a heading with an action on the right uses `.
 
 ### App bar
 
-Always visible. Brand (basket icon and "Cekar") and, on desktop, the tabs. A control that should submit on change carries `data-autosubmit` (with a `<noscript>` button as fallback). The handler lives in `theme.js` (loaded in the head), not in the deferred `app.js`, so a choice made while the page script is still loading is not lost. The app bar lives in `base.html`; do not copy it. Which controls the app bar gets beyond the brand and tabs is TBD for cekar.
+Always visible. Brand (basket icon and "Cekar"), on desktop the tabs, and on the right the user menu (see below). A control that should submit on change carries `data-autosubmit` (with a `<noscript>` button as fallback); `app.js` submits its form on `change`. The app bar lives in `base.html`; do not copy it.
 
 ### Tabs and bottom nav
 
-Desktop: `.tabs` with `a.tab` (active tab has `.active`). Phone: `.bottom-nav` with icon pills. Both are written once in `base.html` and must list the same sections (currently Lists and Expenses). Add a section there, nowhere else.
+Desktop: `.tabs` with `a.tab` (active tab has `.active`). Phone: `.bottom-nav` with icon pills. Both are written once in `base.html` and must list the same sections (currently Lists, Expenses and Settings). Add a section there, nowhere else.
 
 ### Sub-page header with back button
 
-HA's standard sub-page header: a round icon button with an arrow on the same row as the title, left of it. Use it on every page that has a parent (sub-pages of a top-level section). Top-level pages (Lists, Expenses) have a plain `<h1>` in `.page-title`.
+HA's standard sub-page header: a round icon button with an arrow on the same row as the title, left of it. Use it on every page that has a parent (sub-pages of a top-level section). Top-level pages (Lists, Expenses, Settings) have a plain `<h1>` in `.page-title`.
 
 ```jinja
 {{ page_head(request, 'Edit list') }}                      {# parent: Lists (default) #}
@@ -131,7 +131,7 @@ Any button that destroys data carries `data-confirm="Question?"` (browser confir
 
 ### Floating button and chooser
 
-The round `+` (`a.fab`, `data-dialog`) is shown on pages where the main action is adding something. It opens a bottom sheet on phones and a small dialog on desktop, which can list `a.choice` rows when there is more than one thing to add. Which pages get it and what it offers is TBD for cekar (`base.html` has no FAB yet).
+The round `+` (`a.fab`, `data-dialog`) goes in the `{% block fab %}` of `base.html`. Cekar uses it on Expenses only (it opens "Add expense"; hidden when fewer than two members exist). Lists add through the add field instead. A page with more than one thing to add can open a chooser of `a.choice` rows.
 
 ### Dialog and confirm
 
@@ -183,15 +183,79 @@ A native `<details>` with a `<summary>`; no custom widget. Used for archived ite
 
 ### Toast
 
-`toast(message)` in `app.js` shows a short `.toast` at the bottom of the screen for about three seconds. Use it only to report a background action that failed (for example saving a background choice); successful actions reload the page and need no toast.
+`toast(message)` in `app.js` shows a short `.toast` at the bottom of the screen for about three seconds. Use it only to report a background action that failed (for example a reorder that did not save); successful actions need no toast. Deletes use the snackbar below.
 
 ### Empty state
 
 `<div class="empty">No entries</div>` inside the place where the content would be (inside a `.card` when a card is expected). One short sentence; if the user can fix it, add a primary button under it.
 
+### Snackbar (delete and undo)
+
+`.snackbar` at the bottom of the screen (above the bottom nav on phones): message, an `Undo` button and a close icon, hidden after 10 seconds. A delete redirects to the page with `?undo=<kind>&id=<uuid>&name=<text>`; `base.html` renders the snackbar from those parameters (`undo_info()` in `web/ui.py`), so Undo works without JavaScript. Undo posts to the matching `.../restore` route. `deleted_redirect()` builds the redirect. Only deleting a whole list asks first (confirm dialog), and it offers Undo too. It replaces the toast for deletes.
+
+```html
+<div class="snackbar" id="snackbar" role="status">
+  <span class="msg">Deleted item Bread</span>
+  <form method="post" action="/items/ID/restore"><button class="btn">Undo</button></form>
+  <a class="icon-btn" href="..." aria-label="Close">...</a>
+</div>
+```
+
+### Tag
+
+`.tag` is a small pill beside a title: `.tag.for` ("For Ana", error colour tint), `.tag.personal` ("Personal", success tint), plain `.tag` ("you" in Settings).
+
+```html
+<span class="title">Razor blades <span class="tag for">For Bor</span></span>
+```
+
+### Item row with round check
+
+`.row.item` holds `form.pick-form` with `button.pick` (a round check: `.circle` inside, `.on` when checked), then `a.row-link` (name, `.qty`, tag, "Added by" detail) and `button.handle` (drag handle, shown only with JavaScript). Checked rows have `.is-checked`; the row just added or matched gets `.hl` for a moment. `form[data-ajax]` posts in the background and swaps the live region.
+
+### Add field with suggestions
+
+`.add-card` holds `form.add-field`: a leading plus icon, the name input, a compact quantity box and a `for` toggle that cycles Shared and each member (a select when there are three or more members). `.suggest` is the dropdown under it; each `button[role=option]` has the match in `<mark>` and a `.s-hint` ("checked, tap to uncheck"). Without JavaScript the same form posts normally and `.no-js-only` content (a plain "for" select) is shown.
+
+### Checked section
+
+`details.checked-section` ("2 checked items") with a list card of checked rows, followed by `.checked-actions` (Clear checked, outlined; Done shopping, primary). Both buttons are hidden when nothing is checked.
+
+### Balance card
+
+`.card.balance-card` with a `.label` and `.bal-line` rows: a sentence in `.value` (`.pos` green, `.neg` red) and a Settle up `btn outline with-icon`. One pair shows the pair sentence only. Several pairs show the viewer's total first, then one `.bal-line.sub` per pair. A viewer who is not a member sees names instead of "you".
+
+### Collapsed trip row
+
+A shopping trip is one `details.trip-wrap` in the month's list card. `summary.row.trip-row` has the trip badge (`.t-trip`), "Shopping trip · List", the paid by line with the expense count, the total (and "you lent") on the right and a chevron; the open state shows the trip's expenses in `.trip-children`. Expense and payment rows use badge kinds `.t-equal`, `.t-for`, `.t-personal`, `.t-exact`, `.t-payment` (icon and tint per kind).
+
+### Alerts
+
+`.alert` with `.error`, `.warning`, `.success` or `.info`: icon, `.txt`. `.page-alert` places one above the page content (for example "Shopping trip saved: 2 expenses recorded").
+
+### User menu and avatar
+
+`details.user-wrap` in the app bar: `summary.icon-btn.user-btn` shows the person's initial; `.popover` has `.user-menu-name`, `.user-menu-sub` ("Home Assistant user", plus "not a member" when it applies) and, outside Ingress, a "Switch person" `button.menu-btn`. `.avatar` (with `.sm`) is the round initial used in rows, coloured `.c1` to `.c5` from the user id (`avatar_color()`).
+
+### Count chips
+
+The list switcher is `.chips.lists` of `a.chip` with a `span.n` count of unchecked items; a dashed `a.chip.add` ("New list") ends it. The active chip has `.active`.
+
+### Dialog parts
+
+- `.price-row`: item name with a `small` ("For Bor") and a price field (Done shopping).
+- `.mini-list`, `.mini-row`, `.sum-line`: compact list of shared items with a footnote.
+- `.split-wrap` with a wrapping `.seg.wrap` of radio `label`s (expense split); the panel after it (`.split-panel.panel-equal`, `-for`, `-personal`, `-exact`) is shown by CSS `:has()` for the checked radio, so it needs no script. `.member-chips` are checkbox chips.
+- `.exact-rows` (one field per member) and `.left-line` (`.ok` or `.bad`; "Left to assign" with the amount, updated by `app.js`).
+- `.grid2` pairs the amount and the date.
+
+### Settings rows
+
+A `form.row` with an `.avatar`, name and `.tag`, and a `label.switch` that submits on change (`data-autosubmit`); a `.help-card` row ends the group. List rows are `.row` with `a.row-link` and a `.move` form of two icon buttons (up, down).
+
 ### Page-specific layouts
 
-TBD for cekar. Add an entry per new page layout that introduces a class.
+Pages not covered above (Who are you?, Login) use `.page-title`, a `.card.list-card` of rows and a `.card.form`.
 
 ## Checklist for a new page or element
 

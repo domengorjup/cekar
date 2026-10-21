@@ -16,7 +16,7 @@ Python dependencies (FastAPI, Uvicorn, SQLAlchemy, Alembic, Jinja2, python-multi
 
 ## Icons
 
-`addon/cekar/icon.png` and `addon/cekar/logo.png` (once added) are covered by the project licence.
+`addon/cekar/icon.png` and `addon/cekar/logo.png` are rendered from the Material Design Icons `basket` glyph (Apache-2.0 via the Pictogrammers Free License, see `src/cekar/web/static/LICENSE-mdi.md`); the composition and wordmark are covered by the project licence.
 
 ## Trademarks
 

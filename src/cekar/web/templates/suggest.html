@@ -1,0 +1,8 @@
+{# Suggestions for the add field: a fragment; empty when nothing matches. #}
+{% if found %}
+<div class="suggest" role="listbox">
+  {% for s, is_checked in found %}
+  <button type="button" role="option" data-name="{{ s.name }}"><span>{{ highlight(s.name, query) }}</span>{% if is_checked %}<span class="s-hint">{{ t('item.checked_hint') }}</span>{% endif %}</button>
+  {% endfor %}
+</div>
+{% endif %}

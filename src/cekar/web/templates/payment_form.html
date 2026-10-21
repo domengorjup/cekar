@@ -1,0 +1,26 @@
+{% extends layout %}
+{% from "_macros.html" import messages, field, dialog with context %}
+{% set heading = t('payment.edit') if payment_id else t('payment.settle_title') %}
+{% block title %}{{ heading }} - {{ t('app.name') }}{% endblock %}
+{% block content %}
+{% set action = ('/payments/' ~ payment_id ~ '/edit') if payment_id else '/settle' %}
+{% call dialog(request, heading, action, '/expenses') %}
+  <div class="dialog-body">
+    {{ messages(errors, warnings) }}
+    <div class="alert info">{{ icon('cash-multiple', 20) }}<div class="txt"><b>{{ t('payment.payer_line', payer=from_user.display_name, payee=to_user.display_name) }}</b></div></div>
+    <input type="hidden" name="debtor" value="{{ f['from'] }}">
+    <input type="hidden" name="creditor" value="{{ f['to'] }}">
+    <input type="hidden" name="confirmed" value="{{ f.confirmed }}">
+    {{ field(t('payment.amount'), 'amount', f.amount, suffix='€', inputmode='decimal', required=True) }}
+    {{ field(t('common.date'), 'date', f.date, type='date', required=True) }}
+    {% if owed %}<div class="help flush">{{ t('payment.owed_now', amount=money(owed)) }}</div>{% endif %}
+  </div>
+  <div class="dialog-foot">
+    {% if payment_id %}
+    <button type="submit" class="btn danger" formaction="{{ url(request, '/payments/' ~ payment_id ~ '/delete') }}" formnovalidate>{{ t('common.delete') }}</button>
+    {% endif %}
+    <a class="btn" href="{{ url(request, '/expenses') }}" data-close>{{ t('common.cancel') }}</a>
+    <button type="submit" class="btn primary">{{ t('payment.record') if not payment_id else t('common.save') }}</button>
+  </div>
+{% endcall %}
+{% endblock %}

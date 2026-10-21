@@ -1,0 +1,20 @@
+{% extends layout %}
+{% from "_macros.html" import confirm_dialog with context %}
+{% block title %}{{ t('member_off.title', name=person.display_name) }} - {{ t('app.name') }}{% endblock %}
+{% block content %}
+{% call confirm_dialog(request, t('member_off.title', name=person.display_name), '/settings/members/' ~ person.id) %}
+  <input type="hidden" name="confirmed" value="1">
+  {% for b in balances %}
+  <p>
+    {%- if b.creditor_id == user.id %}{{ t('balance.owes_you', name=b.debtor_name, amount=money(b.amount_cents)) }}
+    {%- elif b.debtor_id == user.id %}{{ t('balance.you_owe', name=b.creditor_name, amount=money(b.amount_cents)) }}
+    {%- else %}{{ t('balance.owes', debtor=b.debtor_name, creditor=b.creditor_name, amount=money(b.amount_cents)) }}{% endif -%}
+  </p>
+  {% endfor %}
+  <p>{{ t('member_off.body') }}</p>
+  <div class="dialog-foot">
+    <a class="btn" href="{{ url(request, '/settings') }}" data-close>{{ t('common.cancel') }}</a>
+    <button type="submit" class="btn primary">{{ t('member_off.confirm') }}</button>
+  </div>
+{% endcall %}
+{% endblock %}

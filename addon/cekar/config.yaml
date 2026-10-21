@@ -1,5 +1,5 @@
 name: Cekar
-version: "0.0.1"
+version: "0.1.0"
 slug: cekar
 description: "Household shopping lists and shared expenses."
 url: https://github.com/domengorjup/cekar
@@ -8,6 +8,7 @@ arch:
   - aarch64
 ingress: true
 ingress_port: 8099
+ingress_panel: true
 panel_icon: mdi:basket
 panel_title: Cekar
 # All household Home Assistant users use the app, not only admins.

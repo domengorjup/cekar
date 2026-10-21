@@ -20,3 +20,7 @@ Users then see the update after the add-on store checks for updates.
 ## Later
 
 A GitHub Actions workflow that builds multi-arch images and publishes them to GHCR is planned. `config.yaml` would then get an `image:` key and the git clone in the Dockerfile goes away.
+
+## Test Home Assistant
+
+`.dev/release_deploy.py` reads the test VM login from `~/.config/cekar-test/ha.env` (`HA_USER`, `HA_PASSWORD`). Set `CEKAR_TEST_ENV=<path>` to use another env file. The file is never committed or printed.

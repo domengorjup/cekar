@@ -33,7 +33,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SSH_HOST = "linux-turbo"
 INCUS_INSTANCE = "haos-test"
-ENV_FILE = Path.home() / ".config/cekar-test/ha.env"
+ENV_FILE = Path(os.environ.get("CEKAR_TEST_ENV") or Path.home() / ".config/cekar-test/ha.env").expanduser()
 
 CONFIG_YAML = ROOT / "addon/cekar/config.yaml"
 PYPROJECT = ROOT / "pyproject.toml"

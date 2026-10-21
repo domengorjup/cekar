@@ -1,30 +1,27 @@
 ## ADDED Requirements
 
-### Requirement: English and Slovenian
-Every user-visible text, including validation messages, SHALL be available in English and Slovenian. English SHALL be the fallback for a missing translation. Slovenian plural forms (one, two, few, other) SHALL be used where a count is shown.
+### Requirement: English only in v1.0, ready for more languages
+Version 1.0 SHALL ship the English catalog only, with no language switch in the UI and no per-user language preference. Every user-visible text, including validation messages, SHALL come from the message catalog through `t()` and `tn()`, so that another language can be added later by adding a catalog. `tn()` SHALL support plural forms; only the English forms (one, other) are required now.
 
-#### Scenario: Slovenian plural
-- **WHEN** the language is Slovenian and two items are checked
-- **THEN** the checked section title uses the dual form ("2 označena izdelka")
+#### Scenario: English plural
+- **WHEN** two items are checked
+- **THEN** the checked section title reads "2 checked items"
 
-#### Scenario: Catalogs complete
+#### Scenario: Catalog is complete
 - **WHEN** the test suite runs
-- **THEN** both catalogs contain the same keys with the same placeholders, and every key used in code and templates exists
+- **THEN** every key used in code and templates exists in the English catalog, and every plural key has the `one` and `other` forms
 
-### Requirement: Language per user
-Each user SHALL be able to choose English or Slovenian from the user menu; the choice SHALL be stored with the user and apply on every device. When a user has not chosen, the language SHALL be the best match of the request's `Accept-Language` header among Slovenian and English, else English.
+#### Scenario: No language controls
+- **WHEN** a user opens the user menu or Settings
+- **THEN** no language switch is shown
 
-#### Scenario: Default from the browser
-- **WHEN** a user who has not chosen a language sends `Accept-Language: sl-SI,sl;q=0.9,en;q=0.8`
-- **THEN** pages are shown in Slovenian
-
-#### Scenario: Explicit choice wins
-- **WHEN** that user chooses English
-- **THEN** pages are shown in English on all devices, whatever the browser language
-
-### Requirement: Locale formatting
-Amounts and dates SHALL be formatted for the active language: Slovenian `12,50 €` and `21. 10. 2026`; English `€12.50` and `21 Oct 2026`. Amount input SHALL accept a decimal comma or point in both languages.
+### Requirement: Formatting
+Amounts and dates SHALL be formatted in the English style: `€12.50` (symbol first, decimal point) and `21 Oct 2026`. Amount input SHALL accept a decimal comma or point.
 
 #### Scenario: Amount display
-- **WHEN** an expense of 1250 cents is shown in Slovenian
-- **THEN** it reads `12,50 €`
+- **WHEN** an expense of 1250 cents is shown
+- **THEN** it reads `€12.50`
+
+#### Scenario: Amount input with comma
+- **WHEN** a user enters `12,5` as an amount
+- **THEN** it is read as 12 euro and 50 cents

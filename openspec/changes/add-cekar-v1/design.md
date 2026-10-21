@@ -17,11 +17,11 @@ Constraints:
 - Replace the shared Keep list: several lists, fast adding with suggestions from history, Keep-style checked section, near-live updates between phones.
 - Replace Splitwise for one household: equal and exact splits, one-tap "for the other person" and "personal", balances per pair, settle up.
 - Close the loop between the two: "Done shopping" turns the checked items and the receipt total into expenses.
-- English and Slovenian from day one.
+- English only in v1.0, with the i18n machinery in place so Slovenian can be added later without touching the code.
 - A data model that a later offline client can sync against.
 
 **Non-Goals (v1.0):**
-- Expense categories, stats and filters; recurring expenses; receipt photos and notes; CSV import/export (including Splitwise history import); price memory per item; HA notifications; a Lovelace card. These are v1.1 follow-ups (see "Follow-ups"); the data model leaves room for each.
+- Slovenian and a language switch (later); expense categories, stats and filters; recurring expenses; receipt photos and notes; CSV import/export (including Splitwise history import); price memory per item; HA notifications; a Lovelace card. These are v1.1 follow-ups (see "Follow-ups"); the data model leaves room for each.
 - Multiple payers on one expense.
 - Debt simplification across more than two members (balances are shown per pair).
 - The offline app itself (stage 2).
@@ -34,9 +34,10 @@ Constraints:
 ### D1. Stack: same as glovebox
 FastAPI, SQLAlchemy 2, Alembic (run at startup), Jinja2 server-rendered pages, vanilla JavaScript only as enhancement, vendored assets (no CDN), SQLite in WAL mode under `DATA_DIR`. Same reasons as glovebox D1. The CSS tokens and standard elements come from glovebox's `docs/dev/design.md`; cekar keeps its own copy in `docs/dev/design.md` and adds its own elements there.
 
-### D2. Identity from Home Assistant Ingress headers (to verify, Q1)
-- **Add-on mode:** the Supervisor's Ingress proxy is believed to add `X-Remote-User-Id`, `X-Remote-User-Name` and `X-Remote-User-Display-Name` to every proxied request. cekar reads them on every request and treats `X-Remote-User-Id` as the stable identity. This is not yet confirmed for the user's HA version; task 0.1 checks it on `haos-test` before anything depends on it.
-- **Why the headers can be trusted:** the Ingress listener only accepts connections from the Supervisor proxy address (`172.30.32.2`, as in glovebox D9). Nothing else can reach the port, so nothing else can forge the headers.
+### D2. Identity from Home Assistant Ingress headers (source-confirmed, live check in task 0.1; Q1 resolved)
+- **Add-on mode:** the Supervisor's Ingress proxy adds `X-Remote-User-Id`, `X-Remote-User-Name` and `X-Remote-User-Display-Name` to every proxied request: pages, XHR, form posts and websockets. Confirmed from the Supervisor source (`supervisor/api/ingress.py`, `_init_header`; PR #4152, first in Supervisor 2023.08.2, needs HA Core >= 2023.9). No `config.yaml` flag is needed. cekar reads them on every request and treats `X-Remote-User-Id` as the stable identity. Task 0.1 confirms the live behaviour on `haos-test` before anything depends on it.
+- **Forgery and the minimum Supervisor version:** the Supervisor strips client-sent `X-Remote-User-*` headers. Before Supervisor 2026.10.3 (commit `e388a66b`, PR #7377, 2026-10-19) that filter was case-sensitive, so a logged-in HA user could forge another person's identity with a lower-case header. The add-on DOCS and README therefore state a minimum Supervisor of **2026.10.3**; tasks 10.1 and 10.2 write it down.
+- **Why the headers can be trusted:** the main protection is the Ingress listener, which only accepts connections from the Supervisor proxy address (`172.30.32.2`, as in glovebox D9). Nothing else can reach the port. Within that, the minimum Supervisor version closes the lower-case forgery path above.
 - **Auto-registration:** the first request from an unknown `X-Remote-User-Id` creates a `user` row with the name and display name from the headers. Later requests update the display name if it changed in HA. New users are **not** expense members until someone ticks them in Settings (D3).
 - **Fallback if the headers are absent** (older Supervisor, or a client that strips them): a "Who are you?" picker listing the known people (and a field to add one). The choice is stored in a signed cookie (`itsdangerous`, same secret as the session) for one year. A "Switch person" entry in the user menu clears it. The same picker is the identity mechanism in standalone mode.
 - **Recommendation:** use the headers when present and the picker only as fallback. The headers give real per-person identity with zero setup and no way to pick the wrong person on a shared tablet. The picker is weaker (anyone can choose anyone) but acceptable inside one trusting household, and it keeps the app usable if the headers turn out to be missing.
@@ -60,7 +61,7 @@ Same as glovebox D9: listens on 8080 at root, optional `CEKAR_PASSWORD` login wi
 - **Input:** amounts accept `12,50`, `12.50`, `12,5` and `12`; at most two decimals; no thousands separators. Zero and negative amounts are rejected.
 - **Equal split rounding (deterministic):** for an amount `A` (cents) and `n` participants, everyone's base share is `A // n`; the remainder `r = A % n` cents go one each to the first `r` participants in this order: **the payer first (if the payer participates), then the other participants by the member display order** (order of becoming a member, stored as `member_since`, ties by user id). So in a two-person split the payer absorbs the odd cent and the other person never owes more than half. Shares always sum exactly to `A`.
 - **Exact amounts:** the entered shares must sum exactly to the total; the form shows the difference live and refuses to save until it is zero. Shares of zero are allowed and not stored.
-- **Display:** locale-formatted (D10): `12,50 €` in Slovenian, `€12.50` in English.
+- **Display:** English style (D10): `€12.50`, symbol first, decimal point. Input still accepts a decimal comma or point.
 
 ### D6. Split methods
 Every expense has one payer (always a dropdown on the add and edit form, default the current user if a member, else the first member) and one `split` value:
@@ -86,6 +87,7 @@ Every expense has one payer (always a dropdown on the add and edit form, default
 ### D8. Shopping lists, items and suggestions
 - **Lists:** any number, each with a name and a position. Everyone can create, rename, reorder and delete lists. The app remembers each user's last opened list (per user, server-side) and opens it on start.
 - **Items:** `name` (required, trimmed, up to 100 characters), `quantity` (optional **free text**, up to 30 characters, e.g. `2`, `500 g`, `2 kg`, `a big one`), `for_whom` (optional member; blank means shared), `added_by` (set automatically), `checked_at`/`checked_by`, `cleared_at`.
+  - **Add field:** the field takes the name plus two small inline controls: a compact quantity box and a "for" person toggle. The toggle shows "shared" by default; a tap cycles shared, then each member in display order, then back to shared. With three or more members a tap opens a small picker instead of cycling. Both controls reset to blank/shared after every add (also after adding from a suggestion, which uses the controls' current values). The edit dialog holds the full fields (name, quantity, for whom, delete).
   - **Free-text quantity** was chosen over number + unit: Keep users write quantities freely, a unit list would need translating and maintaining, and v1 does no maths on quantities. Price memory (v1.1) works per item name and does not need structured quantities.
 - **Ordering:** unchecked items by position (newest at the bottom, drag to reorder on desktop and with a handle on phones); checked items in a collapsed "N checked items" section at the bottom, most recently checked first.
 - **Check / uncheck** is one tap. **Clear checked** sets `cleared_at` on all checked items of the list, which hides them. **Delete** (from the item's edit dialog) sets `deleted_at`.
@@ -101,15 +103,15 @@ Every expense has one payer (always a dropdown on the add and edit form, default
 - **Why polling over SSE or WebSockets:** it works through any proxy (HA Ingress, reverse proxies) without long-lived connections, needs no extra server machinery or library, survives the companion app suspending the page, and costs one tiny indexed query per poll. With a handful of users the load is negligible. A 4-second delay is fine for a shopping list. SSE through Ingress is probably possible but adds connection-lifetime and reconnection questions for no visible gain.
 - The same mechanism refreshes the balances summary on the expenses page (one version for all expenses and payments).
 
-### D10. Internationalisation: dict catalogs in TOML, no Babel
-- **Languages:** English (`en`) and Slovenian (`sl`). English is the fallback.
-- **Catalogs:** `src/cekar/i18n/en.toml` and `sl.toml`, flat dotted keys (`list.add_item`, `expense.split.equal`) with `{name}`-style placeholders. Loaded once at startup with `tomllib` (standard library).
-- **API:** `t(key, **params)` and `tn(key, n, **params)` for plurals, exposed to Jinja2 as globals bound to the request's language. Plural keys hold one form per category: English `one`/`other`; Slovenian `one`/`two`/`few`/`other` (rule: `n % 100 == 1` one, `== 2` two, `3–4` few, else other).
-- **Formatting:** `money(cents, lang)` and `date(d, lang)` in `web/formatting.py` (the skeleton's module, made language-aware) (decimal comma and `12,50 €` in Slovenian; `€12.50` in English; dates `21. 10. 2026` and `21 Oct 2026`, with month names from the catalog).
-- **Language choice per user:** stored on the `user` row (`language`, nullable). When it is not set: best match of the request's `Accept-Language` header among `sl` and `en`, else `en`. A switch in the user menu sets it. HA's own profile language is probably not passed to add-ons (Q2); the browser or companion-app language is the best available default.
+### D10. Internationalisation: dict catalogs in TOML, English only in v1.0
+- **v1.0 ships English only (user decision after the mockup review).** No language switch in the UI, no per-user language, no `Accept-Language` handling. The machinery stays so that Slovenian is a catalog plus a switch later (see Follow-ups).
+- **Catalog:** `src/cekar/i18n/en.toml`, flat dotted keys (`list.add_item`, `expense.split.equal`) with `{name}`-style placeholders. Loaded once at startup with `tomllib` (standard library). A second catalog file is added later.
+- **API:** `t(key, **params)` and `tn(key, n, **params)` for plurals, exposed to Jinja2 as globals. Plural keys hold one form per category; English needs `one`/`other` only. `tn()` stays generic (category chosen by a per-language rule table), so adding the Slovenian rule (`n % 100 == 1` one, `== 2` two, `3-4` few, else other) later changes data, not callers.
+- **Formatting:** `money(cents)` and `date(d)` in `web/formatting.py`: `€12.50`, dates `21 Oct 2026`, month names from the catalog. `parse_amount` accepts a decimal comma or point.
 - **Service errors** are raised as message keys with parameters, never as English strings, so the web layer translates them.
-- **Tests:** both catalogs have the same keys, the same placeholders per key and every plural category; every `t("...")` key used in templates and code exists.
-- **Why not gettext/Babel:** gettext needs an extract and compile step (`.po` → `.mo`) and Babel as a dependency, which buys little for two languages and a few hundred strings. TOML catalogs need no tooling, are easy to diff and review, and tests catch the mistakes extraction would. **Rejected:** JSON (no comments), Python dicts (harder for a translator to edit).
+- **Tests:** every `t("...")`/`tn("...")` key used in templates and code exists in the catalog, every plural key has its forms, and placeholders in each message match the call. With one catalog there is no parity test now; it returns when a second catalog is added.
+- **Why not gettext/Babel:** gettext needs an extract and compile step (`.po` to `.mo`) and Babel as a dependency, which buys little for a few hundred strings. TOML catalogs need no tooling, are easy to diff and review, and tests catch the mistakes extraction would. **Rejected:** JSON (no comments), Python dicts (harder for a translator to edit).
+- **Note for later (language detection findings, kept from the earlier design):** the per-user language would be stored on the `user` row (nullable `language` column, added by a migration then). The default would be the best match of the `Accept-Language` header among the shipped languages, else English. HA's profile language is not available to add-ons: Supervisor's `HomeAssistantUser` has no language field, no language header is forwarded, and no route was found for add-ons to read it (medium-high confidence; Q2). Task 0.2 still records what `Accept-Language` each client sends.
 
 ### D11. Shopping trip: "Done shopping" turns a list into expenses
 - **Entry:** a "Done shopping" button on a list with at least one checked item. It opens a form with: receipt total (required), date (today), paid by (dropdown, default current user), and one price field for each checked item that has a `for_whom`. Items without `for_whom` are listed, without price fields, as "shared".
@@ -119,7 +121,7 @@ Every expense has one payer (always a dropdown on the add and edit form, default
   - if the payer has priced items for themselves: one `personal` expense with their sum;
   - the remainder `total − Σ prices`, if above zero: one `equal` expense among all members, titled with the list name;
   - then all checked items of the list are cleared (`cleared_at`), so they feed suggestions as usual.
-- **Why several expenses instead of one mixed one:** each resulting expense has one ordinary split method, so balances, editing and later categories and stats treat trip expenses exactly like hand-entered ones. The trip row groups them in the expense list ("Shopping, 21 Oct: 3 expenses") and lets the user open them together.
+- **Why several expenses instead of one mixed one:** each resulting expense has one ordinary split method, so balances, editing and later categories and stats treat trip expenses exactly like hand-entered ones. The trip row groups them in the expense list: one collapsed row (trip badge, list name, trip total) that expands to show the individual expenses.
 - **Payer is not a member** (e.g. the tablet account pressed the button): the paid-by dropdown lists members only, so this cannot happen; the default falls back to the first member.
 - **Fewer than two members:** the button still clears the checked items but skips the expense part, with a hint.
 - **Undo:** none in v1 beyond deleting the created expenses individually; cleared items are not restored.
@@ -135,15 +137,16 @@ These rules apply to every table that holds user data (`user`, `shopping_list`, 
 - **Rejected:** integer primary keys plus a separate public UUID (two ids per row, easy to mix up); per-table counters (one global cursor is simpler for clients).
 
 ### D13. Data model
-- **`user`**: id, ha_user_id (unique, nullable for standalone/picker people), username, display_name, is_member, member_since (nullable), language (nullable), last_seen_at, sync fields.
+- **`user`**: id, ha_user_id (unique, nullable for standalone/picker people), username, display_name, is_member, member_since (nullable), last_seen_at, sync fields.
 - **`user_preference`**: id, user_id, key, value (e.g. `last_list_id`), sync fields. Unique `(user_id, key)`.
-- **`shopping_list`**: id, name, position, sync fields.
+- **`shopping_list`**: id, name, position, sync fields. v1.1 adds nullable `default_category_id` by migration.
 - **`item`**: id, list_id, name, name_key (normalised for suggestions), quantity, for_whom_id (nullable), added_by_id, position, checked_at, checked_by_id, cleared_at, sync fields.
-- **`expense`**: id, title, amount_cents, spent_on (date), payer_id, split (`equal`|`exact`|`for_other`|`personal`), trip_id (nullable), created_by_id, sync fields. v1.1 adds nullable `category_id` and `note`.
+- **`expense`**: id, title, amount_cents, spent_on (date), payer_id, split (`equal`|`exact`|`for_other`|`personal`), trip_id (nullable), created_by_id, sync fields. v1.1 adds nullable `category_id` and `note` by migration.
 - **`expense_share`**: id, expense_id, user_id, amount_cents, sync fields. Unique `(expense_id, user_id)` among live rows; sum equals the expense amount (checked in the service layer).
 - **`payment`**: id, from_user_id, to_user_id, amount_cents, paid_on, created_by_id, sync fields.
 - **`shopping_trip`**: id, list_id, payer_id, total_cents, spent_on, created_by_id, sync fields.
 - **`change_counter`**: single row, `value`.
+- **Room for v1.1 (decided):** `expense.category_id` and `shopping_list.default_category_id` are NOT created in v1.0. Adding a nullable column in SQLite is a cheap Alembic `ADD COLUMN`, existing rows simply read NULL (no category), and an unused column plus a missing `category` table would be dead weight. The v1.1 migration creates the `category` table, seeds the 5 defaults and adds both columns. Nothing in v1.0 (trip expenses are plain `expense` rows, the trip row already links them) blocks this.
 - **`setting`**: key, value (app-wide: the cookie-signing secret if generated, schema notes). Not synced.
 - Sync fields = `created_at`, `updated_at`, `deleted_at`, `seq`.
 
@@ -158,7 +161,7 @@ src/cekar/
   app.py, config.py, db.py, models.py, urls.py
   identity.py          # D2: resolve the acting user from headers / picker cookie
   auth.py              # add-on source check, standalone password login
-  i18n.py, i18n/{en,sl}.toml   # D10 catalogs, t/tn, resolve_language
+  i18n.py, i18n/en.toml   # D10 catalog, t/tn
   api/v1.py            # D14: /api/v1/health only in v1
   services/
     sync.py            # next_seq(), soft_delete(), restore(), base mixin for sync fields (D12)
@@ -175,7 +178,7 @@ src/cekar/
 addon/cekar/         # HA add-on folder; repository.yaml at repo root
 ```
 
-- **Frozen interfaces:** `models.py`, `services/sync.py`, the `i18n.py` and `web/formatting.py` signatures (`t`, `tn`, `resolve_language`, `money`, `date`, `parse_amount`) and the function signatures in every `services/*.py` are written in task group 1 and then frozen.
+- **Frozen interfaces:** `models.py`, `services/sync.py`, the `i18n.py` and `web/formatting.py` signatures (`t`, `tn`, `money`, `date`, `parse_amount`) and the function signatures in every `services/*.py` are written in task group 1 and then frozen.
 
 ### D16. Un-ticking a member with an open balance is allowed (Q3 resolved)
 Turning off "Member of shared expenses" is never blocked. If the person's balance with anyone is not zero, Settings shows a warning with the amount before the switch is saved. After that their balance stays visible on the balances page and settle up keeps working until it is zero. Rejected: blocking the switch, because a guest who leaves with a debt would then have to stay a member.
@@ -187,12 +190,32 @@ Turning off "Member of shared expenses" is never blocked. If the person's balanc
 - **Confirmation:** no confirm dialog for items, expenses and payments, since undo exists. Deleting a whole list keeps its confirm dialog and also offers Undo.
 - **Limit:** undo is offered right after the delete only; v1 has no trash view. A deleted row stays restorable in the database until a future purge (D12).
 
+### D18. UI structure (confirmed in the mockup review)
+- **Approved mockup:** `.mockups/ui-v1/` (with its `NOTES.md`) is the approved mockup and the reference for the UI tasks (group 8). Where a task and the mockup differ, the mockup wins; changes are recorded in its `NOTES.md`.
+- **Navigation:** three tabs, Lists / Expenses / Settings, as a bottom navigation on phones. Balances live inside Expenses.
+- **List switcher:** chips above the items; the row scrolls horizontally when there are many lists.
+- **Stats (v1.1):** a "List | Stats" sub-view of Expenses. Not built in v1.0.
+- **Add field and edit dialog:** the add field takes the name plus the inline quantity box and "for" toggle (D8). The item edit dialog holds the full fields.
+- **Expense list:** expenses from one trip are one collapsed row (D11).
+- **Language:** no language switch anywhere in v1.0 (D10).
+
 ## Follow-ups (v1.1, not in this change)
-Listed so the v1 model does not block them:
-- **Categories, stats and filters:** `category` table, nullable `expense.category_id`, a default category per list that trip expenses inherit. Personal expenses already count.
+Listed so the v1 model does not block them. The decisions below are settled; they become the v1.1 change's requirements and are NOT part of this change's specs.
+- **Categories (settled):**
+  - Editable. 5 defaults: Groceries, Household, Bills, Eating out, Other. Add, rename and delete happen in Settings.
+  - Deleting a category that is in use asks where to move its expenses.
+  - Each list has a default category. All expenses of a trip take the list's default; a single expense can be changed later.
+  - Data: `category` table, nullable `expense.category_id`, nullable `shopping_list.default_category_id` (added by the v1.1 migration, see D13). Personal expenses already count.
+- **Stats sub-view (settled):** a "List | Stats" sub-view of Expenses.
+  - Period chips: this month, last month, this year, custom.
+  - Filters: by category, by person, and "personal only". The person filter shows that person's SHARE (what they consumed), not what they paid.
+  - Summary cards, a stacked monthly bar chart by category, and tables by category and by person (paid / consumed / paid minus consumed).
+- **Import/Export (settled):** under Settings > Data.
+  - CSV export of expenses and payments.
+  - Splitwise CSV import with a preview step: detected format, mapping the file's people to members, mapping categories (new categories are created only after confirmation), skipping duplicates, per-row results, and Undo import. Splitwise's per-person columns map onto `exact` shares (expenses and shares are already explicit rows).
+- **Language (later, after or with v1.1):** Slovenian catalog, language switch in the user menu, per-user language preference (nullable `user.language` by migration) and the `Accept-Language` default. See the note in D10; needs the Slovenian plural rule in `tn()`, catalog parity tests, and Slovenian formatting (`12,50 €`, `21. 10. 2026`).
 - **Recurring expenses:** a template row plus a generator; expenses keep their shape.
 - **Receipt photo and note:** nullable `expense.note`, files under `/data/receipts/<expense id>`.
-- **CSV import/export incl. Splitwise history:** expenses and shares are already explicit rows; Splitwise's per-person columns map onto `exact` shares.
 - **Price memory per item:** item prices from trips (D11) are the data source; store them on the item (`price_cents`, nullable) when a trip prices it.
 - **Notifications via HA notify** (list changed, expense added, you owe): needs `homeassistant_api: true`; the `seq` cursor tells what changed since the last notification.
 - **Lovelace card:** probably via a companion integration exposing a to-do entity per list; to be decided.
@@ -209,7 +232,7 @@ Listed so the v1 model does not block them:
 Greenfield. Alembic `upgrade head` at startup. Rollback via HA add-on backups of `/data`.
 
 ## Open Questions
-- **Q1. Ingress identity headers.** Does the Supervisor on `haos-test` (current HAOS) pass `X-Remote-User-Id`, `X-Remote-User-Name` and `X-Remote-User-Display-Name` to the add-on, from the browser and from the companion app? Task 0.1 verifies it. If they are absent, the D2 picker becomes the main identity mechanism and Settings gains "add person".
-- **Q2. Default language.** Is HA's profile language visible to the add-on in any way (header, cookie)? Assumed not; the default comes from `Accept-Language`. Task 0.2 records what the browser and companion app actually send.
+- **Q1 — resolved from source: the Supervisor passes the three identity headers (D2).** The Supervisor source confirms them for every proxied request, with a minimum Supervisor version of 2026.10.3 (D2). Task 0.1 still confirms it live on `haos-test` (browser and companion app, admin and non-admin, forged lower-case header, Supervisor version). If they turn out to be absent, the D2 picker becomes the main identity mechanism and Settings gains "add person".
+- **Q2 — resolved: HA's profile language is not passed to add-ons (medium-high confidence; only relevant once a second language is added).** Supervisor's `HomeAssistantUser` has no language field, no language header is forwarded, and no route was found for add-ons to read it. The default stays `Accept-Language` plus the per-user override (D10). Task 0.2 only records the `Accept-Language` each client sends.
 - **Q3 — resolved: allow, with a warning.** Un-ticking a member with a non-zero balance is allowed; the warning shows the amount and the balance stays visible until settled. See D16.
 - **Q4 — resolved: everyone may delete, with undo.** Confirm only when deleting a whole list. See D17.

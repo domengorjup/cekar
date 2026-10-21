@@ -1,4 +1,7 @@
 site_name: Cekar
+copyright: >-
+  MIT licence &middot; Made with AI assistance. Provided "as is", without warranty of any kind;
+  the authors accept no responsibility or liability for its use.
 site_url: https://domengorjup.github.io/cekar/
 site_description: Household shopping lists and shared expenses
 repo_url: https://github.com/domengorjup/cekar

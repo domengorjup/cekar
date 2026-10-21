@@ -28,6 +28,31 @@ An item SHALL have a name (required, trimmed, 1 to 100 characters), an optional 
 - **WHEN** a user submits an item with only spaces as name
 - **THEN** nothing is added and a validation message is shown
 
+### Requirement: Add field with inline controls
+The add field SHALL take the item name together with two small inline controls: a compact quantity box and a "for" person toggle. The toggle SHALL start as "shared"; a tap SHALL cycle shared, then each member in display order, then back to shared. With three or more members, a tap SHALL open a small picker of the members instead. Both controls SHALL reset to empty and "shared" after every add. The item edit dialog SHALL hold the full fields.
+
+#### Scenario: Add with the inline controls
+- **WHEN** a user types "Milk", enters "2 l" in the quantity box and submits
+- **THEN** "Milk · 2 l" is added as a shared item
+- **AND** the quantity box is empty and the toggle shows "shared" again
+
+#### Scenario: Toggle cycles with two members
+- **WHEN** the members are Ana and Bor and a user taps the "for" toggle three times
+- **THEN** it shows Ana, then Bor, then shared
+
+#### Scenario: Picker with three members
+- **WHEN** there are three members and a user taps the "for" toggle
+- **THEN** a small picker lists the members and "shared"
+- **AND** choosing Cene sets the toggle to Cene
+
+#### Scenario: Controls reset after adding
+- **WHEN** a user adds "Shampoo" with the toggle on Bor and then types "Bread"
+- **THEN** "Bread" is added as a shared item with no quantity
+
+#### Scenario: Full fields in the edit dialog
+- **WHEN** a user opens an item's edit dialog
+- **THEN** it shows the name, quantity and "for whom" fields and a delete action
+
 ### Requirement: Checked items section
 Checking or unchecking an item SHALL take one tap. Unchecked items SHALL be shown in their own order, which users can change by dragging. Checked items SHALL be shown below them in a collapsed section titled with their count, most recently checked first. "Clear checked" SHALL remove all checked items of the list from view.
 

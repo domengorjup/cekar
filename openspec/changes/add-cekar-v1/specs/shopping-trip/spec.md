@@ -8,20 +8,20 @@ A list with at least one checked item SHALL offer "Done shopping". It SHALL open
 - **THEN** the form shows price fields for "Shampoo" and "Razor", "Milk" as shared, and "Paid by" set to Ana
 
 #### Scenario: Prices exceed the total
-- **WHEN** the total is 10,00 € and the entered prices sum to 12,00 €
+- **WHEN** the total is €10.00 and the entered prices sum to €12.00
 - **THEN** the form is not saved and a validation message is shown
 
 ### Requirement: Expenses created from a trip
 Confirming "Done shopping" SHALL, in one transaction, record a shopping trip and create: for each member other than the payer with priced items, one "for <person>" expense with the sum of that person's prices; if the payer has priced items, one personal expense with their sum; and if the remainder (total minus all entered prices) is above zero, one equal-split expense among all members. Expenses with a zero amount SHALL NOT be created. All created expenses SHALL be linked to the trip and titled with the list name.
 
 #### Scenario: Mixed receipt
-- **WHEN** the members are Ana and Bor and Ana pays a total of 50,00 € with "Shampoo" for Bor priced 6,00 € and "Razor" for Ana priced 4,00 €
-- **THEN** a 6,00 € expense "For Bor", a 4,00 € personal expense for Ana and a 40,00 € equal-split expense are created
-- **AND** the balances page shows "Bor owes Ana 26,00 €"
+- **WHEN** the members are Ana and Bor and Ana pays a total of €50.00 with "Shampoo" for Bor priced €6.00 and "Razor" for Ana priced €4.00
+- **THEN** a €6.00 expense "For Bor", a €4.00 personal expense for Ana and a €40.00 equal-split expense are created
+- **AND** the balances page shows "Bor owes Ana €26.00"
 
 #### Scenario: Only shared items
-- **WHEN** no checked item has a "for whom" and Bor enters a total of 31,25 €
-- **THEN** exactly one equal-split expense of 31,25 € paid by Bor is created
+- **WHEN** no checked item has a "for whom" and Bor enters a total of €31.25
+- **THEN** exactly one equal-split expense of €31.25 paid by Bor is created
 
 #### Scenario: Everything priced
 - **WHEN** the entered prices sum exactly to the total

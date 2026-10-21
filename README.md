@@ -36,3 +36,7 @@ Open `http://localhost:8080/`. The container runs as UID 1000, so the data folde
 ## Development
 
 See `docs/dev/development.md`. Released under the MIT licence, see [LICENSE](LICENSE).
+
+## Disclaimer
+
+Cekar was developed with the assistance of AI (large language models). It is provided "as is", without warranty of any kind, express or implied. The authors accept no responsibility or liability for any damage, data loss or other consequences arising from its use. See the MIT licence for the full terms.

@@ -8,17 +8,18 @@ The user's household keeps its shopping list in a shared Google Keep note and sp
 - New Home Assistant add-on and add-on repository layout. Sidebar panel visible to all HA users (`panel_admin: false`); data in `/data`, included in HA backups.
 - **Identity from Home Assistant:** no app login in add-on mode. The acting person comes from the Ingress user headers (to be verified on the test instance); users are registered automatically on first visit. Fallback, and standalone identity: a "Who are you?" picker stored in a cookie.
 - **Household members:** Settings lets the household tick which users take part in shared expenses (kids, guests and tablet accounts stay out). Everyone can use the lists.
-- **Shopping lists:** several lists; items with name, optional free-text quantity, who added it (automatic) and optionally for whom. Suggestions from history while typing. Checked items move to a collapsed section at the bottom; "Clear checked" removes them. Changes from other household members appear within seconds (polling).
+- **Shopping lists:** several lists; items with name, optional free-text quantity, who added it (automatic) and optionally for whom. The add field takes the name plus a compact quantity box and a "for" person toggle. Suggestions from history while typing. Checked items move to a collapsed section at the bottom; "Clear checked" removes them. Changes from other household members appear within seconds (polling).
 - **Expenses:** EUR in integer cents. Split equally or by exact amounts, plus two one-tap options on the add form: "For <other person>" (they owe the full amount) and "Personal" (nobody owes, still recorded). "Paid by" is always a dropdown, defaulting to the current user. One payer per expense.
 - **Balances and settle up:** balances per pair of members; "Settle up" records a full or partial payment.
 - **Done shopping:** turns a list's checked items and the receipt total into expenses. Items marked "for <person>" can be priced and are charged to that person (or recorded as personal for the payer); the rest is split equally. The checked items are then cleared.
-- **English and Slovenian,** switchable per user, with the default taken from the browser language.
+- **English only in v1.0,** with the i18n machinery (`t()`/`tn()`, TOML catalog, catalog tests) in place so Slovenian can be added later. No language switch and no per-user language in v1.0.
 - Optional API listener (port 8100, Bearer token, off by default), kept from the shared skeleton; in v1 it serves only a health check, ready for the later dashboard card and offline app.
 - **Ready for a later offline app:** UUID keys, `updated_at` and `deleted_at` on every row, a global change sequence, and all writes through a service layer.
 
 ## Non-goals
 
-- **Later (v1.1, separate changes):** expense categories with stats and filters (each list with a default category), recurring expenses, receipt photo and note, CSV import/export including Splitwise history import, price memory per item (estimated list total), notifications via HA notify, a Lovelace dashboard card.
+- **Later (v1.1, separate changes):** editable expense categories with stats and filters (each list with a default category), recurring expenses, receipt photo and note, CSV export and Splitwise history import, price memory per item (estimated list total), notifications via HA notify, a Lovelace dashboard card.
+- **Later (after or with v1.1):** Slovenian catalog, language switch, per-user language preference and the `Accept-Language` default.
 - **Not planned for v1:** multiple payers per expense, debt simplification across more than two members, the offline app (stage 2, see `docs/dev/offline.md`).
 - **Never:** voice input, Google Keep import, multiple currencies, multiple households.
 
@@ -32,7 +33,7 @@ The user's household keeps its shopping list in a shared Google Keep note and sp
 - `expenses`: expense records, the four split methods, rounding.
 - `balances-settlement`: pair balances and payments.
 - `shopping-trip`: "Done shopping", from checked items to expenses.
-- `i18n`: English and Slovenian, per-user language, locale formatting.
+- `i18n`: English-only catalog behind `t()`/`tn()`, English formatting (`€12.50`), decimal comma or point accepted on input.
 - `sync-readiness`: UUID keys, timestamps, tombstones, change sequence, service-layer writes.
 
 ### Modified Capabilities

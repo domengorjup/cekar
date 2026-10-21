@@ -22,3 +22,7 @@ The SQLite database is stored in the add-on's `/data` folder, which survives res
 
 - The web app is only reachable through Ingress (no app login). Anyone who can open the Home Assistant sidebar entry can use the app.
 - Only the `amd64` and `aarch64` architectures are supported.
+
+## Disclaimer
+
+Cekar was developed with the assistance of AI (large language models). It is provided "as is", without warranty of any kind, express or implied. The authors accept no responsibility or liability for any damage, data loss or other consequences arising from its use. See the MIT licence for the full terms.

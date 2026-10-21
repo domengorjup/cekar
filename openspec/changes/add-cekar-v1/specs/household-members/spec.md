@@ -38,10 +38,10 @@ The system SHALL provide a Settings page, available to every user, that lists al
 When a member is turned off, the system SHALL keep all their existing expense shares, expenses paid and payments, and SHALL keep showing any non-zero balance that involves them until it is settled. Turning a member off SHALL NOT be blocked. When that balance is not zero, the system SHALL warn before turning the member off, and the warning SHALL show the amount.
 
 #### Scenario: Former member with open balance
-- **WHEN** a member who owes 12,00 € is turned off
-- **THEN** a warning showing "12,00 €" is shown first
+- **WHEN** a member who owes €12.00 is turned off
+- **THEN** a warning showing "€12.00" is shown first
 - **AND** after the user confirms the warning the member is turned off
-- **AND** the balance "owes 12,00 €" is still shown on the balances page
+- **AND** the balance "owes €12.00" is still shown on the balances page
 - **AND** settle up for that pair is still possible
 
 ### Requirement: At least two members for expenses

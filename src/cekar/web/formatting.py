@@ -1,0 +1,72 @@
+"""Pure helpers to show and parse numbers in storage units (cents)."""
+
+from __future__ import annotations
+
+from datetime import date
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
+
+# Numbers and their units must never wrap onto two lines.
+NBSP = "\u00a0"
+
+MONTH_NAMES = (
+    "January", "February", "March", "April", "May", "June", "July",
+    "August", "September", "October", "November", "December",
+)  # fmt: skip
+
+
+CURRENCY_SYMBOL = "\u20ac"  # EUR is fixed
+
+
+def money(cents: int | None) -> str:
+    """Return cents as ``"123.45 \u20ac"`` (non-breaking space), or ``"n/a"``."""
+    if cents is None:
+        return "n/a"
+    return f"{format_cents(cents)}{NBSP}{CURRENCY_SYMBOL}"
+
+
+def with_unit(text: str, unit: str) -> str:
+    """Join a number and its unit with a non-breaking space."""
+    return f"{text}{NBSP}{unit}"
+
+
+def short_date(day: date) -> str:
+    """Return ``5 May`` (English month names regardless of the server locale)."""
+    return f"{day.day}{NBSP}{MONTH_NAMES[day.month - 1][:3]}"
+
+
+def month_label(year: int, month: int) -> str:
+    """Return ``May 2026``."""
+    return f"{MONTH_NAMES[month - 1]} {year}"
+
+
+def format_cents(cents: int) -> str:
+    """Return ``12345`` as ``"123.45"``."""
+    return f"{Decimal(cents) / 100:.2f}"
+
+
+def parse_decimal(text: str | None, field_name: str) -> Decimal | None:
+    """
+    Parse a user-typed decimal; blank gives ``None``, comma is accepted.
+
+    Raises
+    ------
+    ValueError
+        With a user-presentable message if the text is not a number.
+    """
+    cleaned = (text or "").strip().replace(",", ".")
+    if not cleaned:
+        return None
+    try:
+        value = Decimal(cleaned)
+    except InvalidOperation:
+        raise ValueError(f"{field_name}: '{text}' is not a number") from None
+    if not value.is_finite():
+        raise ValueError(f"{field_name}: '{text}' is not a number")
+    return value
+
+
+def to_scaled_int(value: Decimal | None, scale: int) -> int | None:
+    """Multiply by ``scale`` (100 for cents) and round half up."""
+    if value is None:
+        return None
+    return int((value * scale).quantize(Decimal(1), rounding=ROUND_HALF_UP))

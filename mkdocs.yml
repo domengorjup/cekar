@@ -1,0 +1,50 @@
+site_name: Cekar
+site_url: https://domengorjup.github.io/cekar/
+site_description: Household shopping lists and shared expenses
+repo_url: https://github.com/domengorjup/cekar
+repo_name: domengorjup/cekar
+docs_dir: docs
+strict: true
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.top
+    - search.highlight
+    - content.code.copy
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - tables
+  - attr_list
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - User guide:
+      - Overview: user/index.md
+  - Developer guide:
+      - Local development: dev/development.md
+      - Testing: dev/testing.md
+      - Design language: dev/design.md
+      - Architecture: dev/architecture.md
+      - Offline app (stage 2): dev/offline.md
+      - Add-on and releases: dev/release.md

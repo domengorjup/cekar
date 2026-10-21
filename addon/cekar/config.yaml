@@ -1,0 +1,29 @@
+name: Cekar
+version: "0.0.1"
+slug: cekar
+description: "Household shopping lists and shared expenses."
+url: https://github.com/domengorjup/cekar
+arch:
+  - amd64
+  - aarch64
+ingress: true
+ingress_port: 8099
+panel_icon: mdi:basket
+panel_title: Cekar
+# All household Home Assistant users use the app, not only admins.
+panel_admin: false
+# Optional API (Bearer token, /api/v1 only). Host port null = off until the
+# user sets it in the add-on network settings; it also needs the api_token option.
+ports:
+  8100/tcp: null
+ports_description:
+  8100/tcp: "API (/api/v1) with Bearer token; needs the api_token option"
+# The Dockerfile is a plain image (no s6 overlay); keep the Docker-provided init.
+init: true
+boot: auto
+startup: application
+backup: hot
+# No `image:` key yet: the Supervisor builds this folder locally on the HA host.
+options: {}
+schema:
+  api_token: "password?"

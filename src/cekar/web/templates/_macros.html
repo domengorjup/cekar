@@ -1,0 +1,74 @@
+{# Shared template macros. Every URL goes through url(request, ...). #}
+
+{% macro messages(errors=None, warnings=None) %}
+  {% for message in errors or [] %}<p class="alert error" role="alert">{{ message }}</p>{% endfor %}
+  {% for message in warnings or [] %}<p class="alert warning">{{ message }}</p>{% endfor %}
+{% endmacro %}
+
+{# Filled text field. #}
+{% macro field(label, name, value='', type='text', suffix=None, inputmode=None, step=None,
+               required=False, list=None, placeholder=None) %}
+  <div class="field{{ ' has-suffix' if suffix }}">
+    <label for="i-{{ name }}">{{ label }}</label>
+    <input id="i-{{ name }}" name="{{ name }}" value="{{ value }}" type="{{ type }}"
+      {%- if inputmode %} inputmode="{{ inputmode }}"{% endif %}
+      {%- if step %} step="{{ step }}"{% endif %}
+      {%- if list %} list="{{ list }}"{% endif %}
+      {%- if placeholder %} placeholder="{{ placeholder }}"{% endif %}
+      {%- if required %} required{% endif %}>
+    {% if suffix %}<span class="suffix">{{ suffix }}</span>{% endif %}
+  </div>
+{% endmacro %}
+
+{% macro textarea(label, name, value='') %}
+  <div class="field">
+    <label for="i-{{ name }}">{{ label }}</label>
+    <textarea id="i-{{ name }}" name="{{ name }}" rows="2">{{ value }}</textarea>
+  </div>
+{% endmacro %}
+
+{% macro switch(name, label, sub, checked) %}
+  <div class="switch-row">
+    <div><div>{{ label }}</div><div class="s">{{ sub }}</div></div>
+    <label class="switch">
+      <input type="checkbox" name="{{ name }}" value="1" {{ 'checked' if checked }} aria-label="{{ label }}">
+      <span class="track"></span>
+    </label>
+  </div>
+{% endmacro %}
+
+{# Select inside a filled field. options: list of (value, text). #}
+{% macro select(label, name, options, selected='', required=False, autosubmit=False) %}
+  <div class="field">
+    <label for="i-{{ name }}">{{ label }}</label>
+    <select id="i-{{ name }}" name="{{ name }}"{{ ' required' if required }}{{ ' data-autosubmit' if autosubmit }}>
+      {% for value, text in options %}
+      <option value="{{ value }}" {{ 'selected' if value | string == selected | string }}>{{ text }}</option>
+      {% endfor %}
+    </select>
+  </div>
+{% endmacro %}
+
+{# Head of a dialog: close link (works without the page script) and title. #}
+{% macro dialog_head(request, title, close_path='/') %}
+  <div class="dialog-head">
+    <a class="icon-btn" href="{{ url(request, close_path) }}" data-close aria-label="Close">{{ icon('close', 24) }}</a>
+    <h3>{{ title }}</h3>
+  </div>
+{% endmacro %}
+
+{# HA sub-page header: round back button left of the title. #}
+{% macro page_head(request, title, parent_path='/', parent_label='Lists') %}
+  <div class="page-head">
+    <a class="icon-btn" href="{{ url(request, parent_path) }}" aria-label="Back to {{ parent_label }}">{{ icon('arrow-left', 24) }}</a>
+    <h1>{{ title }}</h1>
+  </div>
+{% endmacro %}
+
+{# A small form that posts to `path`, asking for confirmation first. #}
+{% macro post_button(request, path, label, confirm_text='') %}
+  <form method="post" action="{{ url(request, path) }}">
+    <button type="submit" class="btn outline"
+      {%- if confirm_text %} data-confirm="{{ confirm_text }}"{% endif %}>{{ label }}</button>
+  </form>
+{% endmacro %}

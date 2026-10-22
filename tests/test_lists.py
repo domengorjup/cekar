@@ -344,3 +344,16 @@ def test_deleted_list_items_stay_in_database(session, people, groceries):
     rows = session.scalars(select(Item)).all()
     assert len(rows) == 1 and rows[0].deleted_at is not None
     assert session.get(ShoppingList, groceries.id).deleted_at == rows[0].deleted_at
+
+
+def test_lists_version_tracks_any_list_and_item(session, people, groceries):
+    before = lists.lists_version(session)
+    other = lists.create_list(session, people.ana.id, "Other")
+    session.flush()
+    after_list = lists.lists_version(session)
+    assert after_list > before
+    add(session, people, other, "Nails")
+    after_item = lists.lists_version(session)
+    assert after_item > after_list
+    lists.delete_list(session, people.ana.id, other.id)
+    assert lists.lists_version(session) > after_item

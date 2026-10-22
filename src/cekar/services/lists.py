@@ -327,6 +327,16 @@ def list_version(session: Session, list_id: str) -> int:
     return max(list_seq or 0, item_seq or 0)
 
 
+def lists_version(session: Session) -> int:
+    """
+    Return the largest ``seq`` over all lists and all items, tombstones
+    included. It changes whenever the list switcher (names, counts) may change.
+    """
+    list_seq = session.scalar(select(func.max(ShoppingList.seq)))
+    item_seq = session.scalar(select(func.max(Item.seq)))
+    return max(list_seq or 0, item_seq or 0)
+
+
 def _item_view(session: Session, item: Item) -> ItemView:
     for_whom = session.get(User, item.for_whom_id) if item.for_whom_id else None
     added_by = session.get(User, item.added_by_id)

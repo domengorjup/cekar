@@ -93,11 +93,15 @@ Tapping a suggestion SHALL add that item to the current list. If an item with th
 - **THEN** "Bread" is unchecked and no second "Bread" is created
 
 ### Requirement: Near-live updates
-While a list page is visible, the system SHALL show changes made by other users within about 5 seconds without a manual reload, by polling the list's change version. Polling SHALL pause while the page is hidden and resume, with an immediate check, when it becomes visible again. Without JavaScript the page SHALL still work with manual reloads.
+While a list page is visible, the system SHALL show changes made by other users within about 5 seconds without a manual reload, by polling the list's change version. The list switcher (the lists and their unchecked counts) SHALL be refreshed by the same polling, so lists created or deleted by others appear or disappear and counts update. Polling SHALL pause while the page is hidden and resume, with an immediate check, when it becomes visible again. Without JavaScript the page SHALL still work with manual reloads.
 
 #### Scenario: Partner adds an item
 - **WHEN** user A has the list open and user B adds "Eggs" to it
 - **THEN** "Eggs" appears on A's screen within about 5 seconds
+
+#### Scenario: Partner creates a list
+- **WHEN** user A has a list open and user B creates the list "Hardware" and adds an item to it
+- **THEN** "Hardware" with its count appears in A's list switcher within about 5 seconds, without a reload
 
 #### Scenario: Hidden tab
 - **WHEN** the list page is in a background tab

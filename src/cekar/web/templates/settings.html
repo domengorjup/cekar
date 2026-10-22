@@ -50,5 +50,13 @@
     <button type="submit" class="btn">{{ t('user.switch_person') }}</button>
   </form>
 </div>
+{% else %}
+<h2>{{ t('settings.signed_in') }}</h2>
+<div class="card list-card">
+  <div class="row">
+    {{ avatar(user) }}
+    <span class="body"><span class="title">{{ user.display_name }}</span><span class="detail">{{ t('user.via_ha') }}{% if not user.is_member %} · {{ t('user.not_member') }}{% endif %}</span></span>
+  </div>
+</div>
 {% endif %}
 {% endblock %}

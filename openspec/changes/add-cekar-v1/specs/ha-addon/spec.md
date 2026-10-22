@@ -18,6 +18,13 @@ The add-on SHALL enable Ingress on port 8099 and add a sidebar panel titled "Cek
 - **WHEN** an HA user without administrator rights opens the sidebar
 - **THEN** the Cekar panel is shown and usable
 
+### Requirement: No second header inside Home Assistant
+In add-on mode on a phone-sized screen the system SHALL NOT show its own top bar, since Home Assistant shows one; the bottom navigation stays. The signed-in person and, where it applies, the "switch person" action SHALL then be reachable in Settings. Standalone mode and wide screens keep the app bar with the user menu.
+
+#### Scenario: Phone inside Home Assistant
+- **WHEN** a user opens the panel on a phone
+- **THEN** only Home Assistant's header is shown above the content, and Settings shows who is signed in
+
 ### Requirement: Optional API port
 The add-on `config.yaml` SHALL declare the API port `8100/tcp` under `ports` with the host port `null` (off by default) and describe it under `ports_description`. The `api_token` option SHALL be optional and a password-type field, and SHALL be the only add-on option in v1. The add-on SHALL NOT request `homeassistant_api` in v1. DOCS.md SHALL explain how to enable the port and the token.
 

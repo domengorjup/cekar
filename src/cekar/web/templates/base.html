@@ -8,7 +8,7 @@
   <script src="{{ url(request, '/static/theme.js') }}"></script>
   <link rel="stylesheet" href="{{ url(request, '/static/app.css') }}">
 </head>
-<body data-sprite="{{ url(request, '/static/icons.svg') }}">
+<body{% if embedded(request) %} class="embedded"{% endif %} data-sprite="{{ url(request, '/static/icons.svg') }}">
   <header class="app-header">
     <a class="brand" href="{{ url(request, '/') }}">{{ icon('basket', 28) }}<span>{{ t('app.name') }}</span></a>
     {% if user %}

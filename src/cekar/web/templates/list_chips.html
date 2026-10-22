@@ -1,0 +1,9 @@
+{# The list switcher: the region the page script swaps while polling. #}
+<div class="chips lists" aria-label="{{ t('list.switcher') }}" data-live-chips data-version="{{ chips_version }}"
+     data-version-url="{{ url(request, '/lists/version') }}"
+     data-fragment-url="{{ url(request, '/lists/' ~ list_id ~ '/chips') }}">
+  {% for l in lists %}
+  <a class="chip {{ 'active' if l.id == list_id }}" href="{{ url(request, '/lists/' ~ l.id) }}">{{ l.name }} <span class="n">{{ counts[l.id] }}</span></a>
+  {% endfor %}
+  <a class="chip add" href="{{ url(request, '/lists/new') }}" data-dialog>{{ icon('plus', 18) }}{{ t('list.new') }}</a>
+</div>

@@ -20,6 +20,14 @@ def _not_found(error: ServiceError) -> HTTPException:
     return HTTPException(status_code=404, detail=error_text(error))
 
 
+def _chips_context(session: SessionDep, list_id: str) -> dict:
+    """Data for the list switcher chips: lists, unchecked counts, change version."""
+    version = lists.lists_version(session)
+    all_lists = lists.all_lists(session)
+    counts = {item.id: len(lists.list_view(session, item.id).unchecked) for item in all_lists}
+    return {"lists": all_lists, "counts": counts, "chips_version": version, "list_id": list_id}
+
+
 def _page(
     request: Request,
     session: SessionDep,
@@ -36,8 +44,6 @@ def _page(
         view = lists.list_view(session, list_id)
     except ServiceError as exc:
         raise _not_found(exc) from exc
-    all_lists = lists.all_lists(session)
-    counts = {item.id: len(lists.list_view(session, item.id).unchecked) for item in all_lists}
     return render(
         request,
         "lists.html",
@@ -45,8 +51,7 @@ def _page(
         user=user,
         section="lists",
         view=view,
-        lists=all_lists,
-        counts=counts,
+        **_chips_context(session, list_id),
         members=members.list_members(session),
         errors=errors or [],
         entered=entered or {},
@@ -60,6 +65,18 @@ def start_page(request: Request, session: SessionDep, user: CurrentUser):
     """Open the user's last list (or the first, or a new default one)."""
     start = lists.start_list(session, user.id, t("list.default_name"))
     return _page(request, session, user, start.id)
+
+
+@router.get("/lists/version", response_class=PlainTextResponse)
+def lists_version(session: SessionDep, user: CurrentUser):
+    """Change version of all lists and items, polled for the list switcher."""
+    return PlainTextResponse(str(lists.lists_version(session)))
+
+
+@router.get("/lists/{list_id}/chips", response_class=HTMLResponse)
+def list_chips(request: Request, session: SessionDep, user: CurrentUser, list_id: str):
+    """The list switcher only (swapped in by the page script)."""
+    return render(request, "list_chips.html", user=user, **_chips_context(session, list_id))
 
 
 # --- list CRUD (fixed paths before /lists/{list_id}) ---------------------------

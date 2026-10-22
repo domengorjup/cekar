@@ -265,6 +265,7 @@ list_items.other = "{n} items"
 move_up = "Move {name} up"
 move_down = "Move {name} down"
 who = "Who are you?"
+signed_in = "Signed in as"
 who_help = "Switch the person you act as."
 
 [member_off]

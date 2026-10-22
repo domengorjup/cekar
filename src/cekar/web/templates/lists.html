@@ -3,12 +3,7 @@
 {% block title %}{{ view.list.name }} - {{ t('app.name') }}{% endblock %}
 {% block content %}
 {% set list_id = view.list.id %}
-<div class="chips lists" aria-label="{{ t('list.switcher') }}">
-  {% for l in lists %}
-  <a class="chip {{ 'active' if l.id == list_id }}" href="{{ url(request, '/lists/' ~ l.id) }}">{{ l.name }} <span class="n">{{ counts[l.id] }}</span></a>
-  {% endfor %}
-  <a class="chip add" href="{{ url(request, '/lists/new') }}" data-dialog>{{ icon('plus', 18) }}{{ t('list.new') }}</a>
-</div>
+{% include "list_chips.html" %}
 
 <div class="list-head">
   <h1>{{ view.list.name }}</h1>

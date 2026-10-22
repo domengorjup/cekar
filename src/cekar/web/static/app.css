@@ -309,6 +309,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
 @media (max-width: 699px) {
   .app-header { padding: 0 var(--ha-space-3); gap: var(--ha-space-2); }
   .tabs { display: none; }
+  body.embedded .app-header { display: none; }
   main { padding: var(--ha-space-4) var(--ha-space-3) calc(200px + env(safe-area-inset-bottom)); }
   .summary-grid { grid-template-columns: 1fr 1fr; gap: var(--ha-space-2); }
   .stat { padding: 14px; } .stat .value { font-size: 22px; }

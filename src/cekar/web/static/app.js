@@ -144,6 +144,7 @@
   function refreshLive(highlight) {
     var live = region();
     if (!live) { return Promise.resolve(); }
+    refreshChips().catch(function (error) { console.error("chips refresh failed", error); });
     var open = Array.prototype.map.call(live.querySelectorAll("details[open]"), function (d) { return d.id; });
     var fragment = live.getAttribute("data-fragment-url") + (highlight ? "?hl=" + encodeURIComponent(highlight) : "");
     return fetch(fragment, { credentials: "same-origin" }).then(function (r) {
@@ -158,7 +159,34 @@
     });
   }
 
+  // The list switcher (chips) is polled like the items, with its own version.
+  function chipsRegion() { return document.querySelector("[data-live-chips]"); }
+
+  function refreshChips() {
+    var chips = chipsRegion();
+    if (!chips) { return Promise.resolve(); }
+    return fetch(chips.getAttribute("data-fragment-url"), { credentials: "same-origin" }).then(function (r) {
+      if (!r.ok) { throw new Error("HTTP " + r.status); }
+      return r.text();
+    }).then(function (html) { chips.outerHTML = html; });
+  }
+
+  function pollChips() {
+    var chips = chipsRegion();
+    if (document.hidden || !chips) { return; }
+    fetch(chips.getAttribute("data-version-url"), { credentials: "same-origin" })
+      .then(function (r) {
+        if (!r.ok) { throw new Error("HTTP " + r.status); }
+        return r.text();
+      })
+      .then(function (version) {
+        if (version.trim() !== chips.getAttribute("data-version")) { return refreshChips(); }
+      })
+      .catch(function (error) { console.error("chips poll failed", error); });
+  }
+
   function poll() {
+    pollChips();
     var live = region();
     if (document.hidden || !live) { return; }
     fetch(live.getAttribute("data-version-url"), { credentials: "same-origin" })
@@ -172,7 +200,7 @@
       .catch(function (error) { console.error("poll failed", error); });
   }
 
-  if (region()) {
+  if (region() || chipsRegion()) {
     setInterval(poll, POLL_MS);
     document.addEventListener("visibilitychange", function () { if (!document.hidden) { poll(); } });
   }

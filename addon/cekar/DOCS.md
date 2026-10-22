@@ -18,7 +18,7 @@ The app is in English. Money is in euros only.
 1. In Home Assistant open Settings, Add-ons, Add-on store, menu (three dots), Repositories. In newer versions add-ons are called apps: Settings, Apps, Install app, menu, Repositories.
 2. Add the repository URL of this project and close the dialog.
 3. Select Cekar, then Install. The image is built on your Home Assistant host, so the first install takes a few minutes.
-4. Start the add-on. The add-on is shown in the sidebar by default ("Show in sidebar" can be switched off). The panel "Cekar" opens the app through Ingress and is visible to all Home Assistant users, not only administrators.
+4. Start the add-on, then switch on **Show in sidebar** on its Info page (it is off after a fresh install). The panel "Cekar" opens the app through Ingress and is visible to all Home Assistant users, not only administrators.
 
 Home Assistant Supervisor 2026.10.3 or later is required. Older versions let a logged-in user forge another person's identity.
 

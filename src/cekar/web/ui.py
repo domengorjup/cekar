@@ -56,6 +56,11 @@ def via_ha(request: Request) -> bool:
     return mode is Mode.ADDON and bool(request.headers.get(USER_ID_HEADER))
 
 
+def embedded(request: Request) -> bool:
+    """True in add-on mode: the page is shown inside HA, which has its own header."""
+    return request.app.state.settings.mode is Mode.ADDON
+
+
 def deleted_redirect(
     request: Request, path: str, kind: UndoKind, row_id: str, name: str = ""
 ) -> RedirectResponse:
@@ -121,5 +126,6 @@ def highlight(name: str, query: str) -> Markup:
 
 templates.env.globals["avatar_color"] = avatar_color
 templates.env.globals["via_ha"] = via_ha
+templates.env.globals["embedded"] = embedded
 templates.env.globals["undo_info"] = undo_info
 templates.env.globals["highlight"] = highlight

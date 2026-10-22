@@ -44,7 +44,9 @@ Section headings are plain `<h2>`; a heading with an action on the right uses `.
 
 ### App bar
 
-Always visible. Brand (basket icon and "Cekar"), on desktop the tabs, and on the right the user menu (see below). A control that should submit on change carries `data-autosubmit` (with a `<noscript>` button as fallback); `app.js` submits its form on `change`. The app bar lives in `base.html`; do not copy it.
+Visible, except in add-on mode on a phone (see below). Brand (basket icon and "Cekar"), on desktop the tabs, and on the right the user menu (see below). A control that should submit on change carries `data-autosubmit` (with a `<noscript>` button as fallback); `app.js` submits its form on `change`. The app bar lives in `base.html`; do not copy it.
+
+**Inside Home Assistant (add-on mode) on a phone** (below 700px) HA shows its own top header, so the app bar is hidden: `base.html` puts `class="embedded"` on `<body>` (`embedded(request)` in `web/ui.py`, true in add-on mode) and `app.css` hides `.app-header` under it. The bottom nav stays. The person (and "Switch person" in the picker fallback) is then reached in Settings ("Signed in as" row, or "Who are you?"). Desktop widths and standalone mode keep the bar.
 
 ### Tabs and bottom nav
 
@@ -239,7 +241,7 @@ A shopping trip is one `details.trip-wrap` in the month's list card. `summary.ro
 
 ### Count chips
 
-The list switcher is `.chips.lists` of `a.chip` with a `span.n` count of unchecked items; a dashed `a.chip.add` ("New list") ends it. The active chip has `.active`.
+The list switcher is `.chips.lists` of `a.chip` with a `span.n` count of unchecked items; a dashed `a.chip.add` ("New list") ends it. The active chip has `.active`. The row is a polled region: it carries `data-live-chips`, `data-version` (global lists-and-items change sequence), `data-version-url` (`/lists/version`) and `data-fragment-url` (`/lists/<id>/chips`); `app.js` polls it with the items and swaps it when the version differs. It lives in `list_chips.html`.
 
 ### Dialog parts
 

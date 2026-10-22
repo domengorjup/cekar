@@ -149,3 +149,42 @@ def test_standalone_picker_adds_a_person_and_settings_can_add_more(client):
 def test_add_person_hidden_for_home_assistant_users(household):
     assert household.get("/settings/people/new").status_code == 404
     assert "Add person" not in household.get("/settings").text
+
+
+def test_list_switcher_is_a_polled_region(household, people, session):
+    list_id = _setup(household, people, session)
+    page = household.get(f"/lists/{list_id}").text
+    assert "data-live-chips" in page
+    assert f'data-fragment-url="{"/lists/" + list_id + "/chips"}"' in page
+
+    version = household.get("/lists/version")
+    assert version.status_code == 200 and version.text.isdigit()
+    chips = household.get(f"/lists/{list_id}/chips")
+    assert chips.status_code == 200
+    assert "<html" not in chips.text and "Weekly" in chips.text
+    assert f'data-version="{version.text}"' in chips.text
+
+
+def test_list_switcher_follows_other_users_changes(household, people, session):
+    list_id = _setup(household, people, session)
+    before = household.get("/lists/version").text
+    created = household.post("/lists/new", data={"name": "Hardware"})
+    new_id = created.headers["location"].rsplit("/", 1)[1]
+    household.post(f"/lists/{new_id}/items", data={"name": "Nails"})
+    assert household.get("/lists/version").text != before
+    chips = household.get(f"/lists/{list_id}/chips").text
+    assert "Hardware" in chips
+    household.post(f"/lists/{new_id}/delete")
+    assert "Hardware" not in household.get(f"/lists/{list_id}/chips").text
+
+
+def test_phone_header_only_dropped_in_addon_mode(household, client, people, session):
+    # Add-on mode: body is marked, Settings shows who is signed in.
+    assert 'class="embedded"' in household.get("/settings").text
+    assert "Signed in as" in household.get("/settings").text
+    # Standalone keeps its header and its picker row.
+    session.commit()
+    client.post("/who", data={"user_id": people.ana.id})
+    standalone = client.get("/settings")
+    assert 'class="embedded"' not in standalone.text
+    assert "Signed in as" not in standalone.text

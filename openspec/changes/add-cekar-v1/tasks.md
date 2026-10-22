@@ -41,10 +41,10 @@
 ## 2. UI mockup and design language (parallel with 1; owns `.mockups/ui-v1/`, `docs/dev/design.md`)
 
 - [x] 2.1 Copy glovebox's design tokens and the standard elements that apply into `docs/dev/design.md` (adapted names; the skeleton already has a first copy, so check and extend it).
-- [ ] 2.2 Build a clickable static mockup in `.mockups/ui-v1/` (open `index.html` directly, no server): list page with add field and suggestions, checked section, list switcher; add-expense form with the four split choices and paid-by dropdown; expense list with a collapsed trip row; balances with settle up; "Done shopping" form; Settings with member switches; "Who are you?" picker; user menu (switch person, no language switch). English only.
-- [ ] 2.3 Screenshot it headless (desktop 1400x900, phone 390x844, light and dark). Record decisions in `.mockups/ui-v1/NOTES.md`.
+- [x] 2.2 Build a clickable static mockup in `.mockups/ui-v1/` (open `index.html` directly, no server): list page with add field and suggestions, checked section, list switcher; add-expense form with the four split choices and paid-by dropdown; expense list with a collapsed trip row; balances with settle up; "Done shopping" form; Settings with member switches; "Who are you?" picker; user menu (switch person, no language switch). English only.
+- [x] 2.3 Screenshot it headless (desktop 1400x900, phone 390x844, light and dark). Record decisions in `.mockups/ui-v1/NOTES.md`.
 - [x] 2.3a Add the delete snackbar ("Deleted <thing> · Undo", about 10 s, plus the no-JS Undo `post_button` on the redirect target) to the mockup and to `docs/dev/design.md` as a new repeated element.
-- [ ] 2.4 (done: the user approved `.mockups/ui-v1/`; any later change is recorded in its `NOTES.md`.) Get the user's feedback, iterate, and mark the approved version in `NOTES.md`. Add every new repeated element to `docs/dev/design.md`.
+- [x] 2.4 (done: the user approved `.mockups/ui-v1/`; any later change is recorded in its `NOTES.md`.) Get the user's feedback, iterate, and mark the approved version in `NOTES.md`. Add every new repeated element to `docs/dev/design.md`.
 
 ## 3. Identity, access and members (needs 0 and 1; owns `identity.py`, `auth.py`, `services/members.py`, `tests/test_identity.py`, `tests/test_members.py`)
 

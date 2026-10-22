@@ -44,6 +44,13 @@ Standing permissions for this loop: anything on the test VM `haos-test` (start/s
 
 ## Next steps
 - **v1 is implemented and released as 0.1.0 (test release)**, installed and verified on `haos-test` as an admin and a non-admin HA user. Open: repeat the forged-header check once Supervisor 2026.10.3 is available (design D2); the test VM's Supervisor store still lists the old `cekar#debug/ingress-headers` repository next to the plain one (removal was denied). Then use the app for a while, fix what turns up, and release 1.0 (remove the README status line, real screenshots); archive the OpenSpec change via the `openspec-archive` skill.
+- **Open items after 0.1.0** (as of 2026-10-22):
+  - Leftovers awaiting the user's OK to delete: the `debug/ingress-headers` branch on origin, the `/mnt/data/workspace/cekar-debug` worktree, and the debug store repository on `haos-test`.
+  - Check in the HA Companion app (not testable headless): identity headers, polling, resume after suspend.
+  - Unverified: whether `ingress_panel: true` in `addon/cekar/config.yaml` is a valid add-on config key or just ignored (it is the name of the "Show in sidebar" toggle in the Supervisor API). Settle this before the sibling copies it.
+  - UI: list chips (counts, lists created by someone else) do not update by polling until a reload; on phone the app's own header sits under HA's header (double header).
+  - `haos-test` holds test data from the 0.1.0 verification ("Weekly" list, expenses, a payment).
+  - Test credentials: there is no `~/.config/cekar-test/ha.env`. Run `.dev/release_deploy.py` with `CEKAR_TEST_ENV=~/.config/glovebox-test/ha.env` (same VM).
 - **v1.1 (separate OpenSpec changes, after v1 has been used for a while; decisions are settled in the change's `design.md` Follow-ups):** editable expense categories (5 defaults, managed in Settings, a default category per list) with a Stats sub-view and filters; CSV export and Splitwise CSV import with preview and undo under Settings > Data; recurring expenses; receipt photo and note; price memory per item (estimated list total); notifications via HA notify (needs `homeassistant_api`); a Lovelace card (probably a companion integration with a to-do entity per list; decide later).
 - **Later:** Slovenian catalog, language switch, per-user language preference and `Accept-Language` default (after or with v1.1).
 - **Stage 2: offline installable app** (design note `docs/dev/offline.md`, shared with the sibling). Not before v1 is in use.

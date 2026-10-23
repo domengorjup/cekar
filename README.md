@@ -33,7 +33,7 @@ Cekar is a self-hosted replacement for a shared Google Keep shopping list and Sp
 - "Done shopping" turns the checked items and the receipt total into expenses. Items marked "for <person>" are charged to that person; the rest is split equally.
 - Uses the Home Assistant user, with no separate login in the add-on. A "Who are you?" picker is the fallback and is used in standalone mode.
 - You choose which users take part in shared expenses (children, guests and tablet accounts can stay out).
-- Looks like Home Assistant and opens in the sidebar through Ingress. English only in v1.0.
+- Looks like Home Assistant and opens in the sidebar through Ingress, or from a one-tap shortcut in the HA Android app. English only in v1.0.
 - Runs as a Home Assistant add-on or as a standalone Docker container; the data is one SQLite file.
 
 ### Planned

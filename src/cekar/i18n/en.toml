@@ -251,7 +251,7 @@ owed_now = "Currently owed: {amount}. A smaller amount is fine."
 
 [settings]
 members = "Shared expenses"
-members_help = "Tick who takes part in shared expenses. Everyone can use the shopping lists."
+members_help = "Tick who takes part in shared expenses. Everyone can use the shopping lists. Other people appear here once they have opened Cekar."
 member_of = "Member of shared expenses"
 from_ha = "Home Assistant user"
 added_by_hand = "Added by hand"

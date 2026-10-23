@@ -1,6 +1,6 @@
 [project]
 name = "cekar"
-version = "0.1.1"
+version = "0.1.2"
 description = "Household shopping lists and shared expenses, as a Home Assistant add-on"
 license = "MIT"
 license-files = ["LICENSE"]

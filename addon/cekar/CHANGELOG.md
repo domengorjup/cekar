@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+
+- If someone deletes the list you are viewing, you are taken to the start list with a notice.
+- Settings explains that people appear once they have opened Cekar.
+
 ## 0.1.1
 
 - List chips (counts, new and deleted lists) update by polling.

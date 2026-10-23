@@ -141,16 +141,29 @@
   /* ---------- live regions: poll a version, swap a fragment (design D9) ---------- */
   function region() { return document.querySelector("[data-live]"); }
 
+  // The list being viewed was deleted by someone else: stop polling, go to the start page.
+  var gone = false;
+  function listGone(live) {
+    if (gone) { return; }
+    gone = true;
+    window.location.href = live.getAttribute("data-start-url");
+  }
+
+  function checkOk(live) {
+    return function (r) {
+      if (r.status === 404 && live.hasAttribute("data-start-url")) { listGone(live); throw new Error("list gone"); }
+      if (!r.ok) { throw new Error("HTTP " + r.status); }
+      return r.text();
+    };
+  }
+
   function refreshLive(highlight) {
     var live = region();
     if (!live) { return Promise.resolve(); }
-    refreshChips().catch(function (error) { console.error("chips refresh failed", error); });
+    refreshChips().catch(function (error) { if (!gone) { console.error("chips refresh failed", error); } });
     var open = Array.prototype.map.call(live.querySelectorAll("details[open]"), function (d) { return d.id; });
     var fragment = live.getAttribute("data-fragment-url") + (highlight ? "?hl=" + encodeURIComponent(highlight) : "");
-    return fetch(fragment, { credentials: "same-origin" }).then(function (r) {
-      if (!r.ok) { throw new Error("HTTP " + r.status); }
-      return r.text();
-    }).then(function (html) {
+    return fetch(fragment, { credentials: "same-origin" }).then(checkOk(live)).then(function (html) {
       live.outerHTML = html;
       open.forEach(function (id) {
         var details = id && document.getElementById(id);
@@ -188,16 +201,13 @@
   function poll() {
     pollChips();
     var live = region();
-    if (document.hidden || !live) { return; }
+    if (gone || document.hidden || !live) { return; }
     fetch(live.getAttribute("data-version-url"), { credentials: "same-origin" })
-      .then(function (r) {
-        if (!r.ok) { throw new Error("HTTP " + r.status); }
-        return r.text();
-      })
+      .then(checkOk(live))
       .then(function (version) {
         if (version.trim() !== live.getAttribute("data-version")) { return refreshLive(); }
       })
-      .catch(function (error) { console.error("poll failed", error); });
+      .catch(function (error) { if (!gone) { console.error("poll failed", error); } });
   }
 
   if (region() || chipsRegion()) {

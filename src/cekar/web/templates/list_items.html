@@ -22,7 +22,8 @@
 
 <div id="items" data-live data-version="{{ view.version }}"
      data-version-url="{{ url(request, '/lists/' ~ list_id ~ '/version') }}"
-     data-fragment-url="{{ url(request, '/lists/' ~ list_id ~ '/items') }}">
+     data-fragment-url="{{ url(request, '/lists/' ~ list_id ~ '/items') }}"
+     data-start-url="{{ url(request, '/') }}?gone=1">
   <div class="card list-card" data-reorder-url="{{ url(request, '/lists/' ~ list_id ~ '/reorder') }}">
     {% for item in view.unchecked %}{{ item_row(item, false) }}
     {% else %}<div class="empty">{{ t('list.empty') }}</div>{% endfor %}

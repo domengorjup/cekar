@@ -188,3 +188,17 @@ def test_phone_header_only_dropped_in_addon_mode(household, client, people, sess
     standalone = client.get("/settings")
     assert 'class="embedded"' not in standalone.text
     assert "Signed in as" not in standalone.text
+
+
+def test_deleted_list_polls_return_404_and_start_page_shows_notice(household, people, session):
+    list_id = _setup(household, people, session)
+    other = household.post("/lists/new", data={"name": "Hardware"})
+    other_id = other.headers["location"].rsplit("/", 1)[1]
+    household.post(f"/lists/{other_id}/delete")
+    assert household.get(f"/lists/{other_id}/items").status_code == 404
+    assert household.get(f"/lists/{other_id}").status_code == 404
+    page = household.get(f"/lists/{list_id}").text
+    assert 'data-start-url="/?gone=1"' in page
+    assert "This list was deleted." not in page
+    assert "This list was deleted." in household.get("/?gone=1").text
+    assert "This list was deleted." not in household.get("/").text

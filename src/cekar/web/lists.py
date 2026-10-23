@@ -57,6 +57,7 @@ def _page(
         entered=entered or {},
         hl=request.query_params.get("hl", ""),
         cleared=request.query_params.get("cleared", ""),
+        gone=request.query_params.get("gone") == "1",
     )
 
 

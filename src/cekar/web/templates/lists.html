@@ -13,6 +13,9 @@
 {% if cleared %}
 <div class="alert success page-alert">{{ icon('check-circle-outline', 20) }}<div class="txt">{{ tn('trip.cleared', cleared | int) }}</div></div>
 {% endif %}
+{% if gone %}
+<div class="alert warning page-alert">{{ icon('alert-outline', 20) }}<div class="txt">{{ t('list.gone') }}</div></div>
+{% endif %}
 {{ messages(errors) }}
 
 <form class="card add-card" method="post" action="{{ url(request, '/lists/' ~ list_id ~ '/items') }}"

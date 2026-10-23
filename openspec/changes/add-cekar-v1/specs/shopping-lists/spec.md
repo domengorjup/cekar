@@ -103,6 +103,10 @@ While a list page is visible, the system SHALL show changes made by other users 
 - **WHEN** user A has a list open and user B creates the list "Hardware" and adds an item to it
 - **THEN** "Hardware" with its count appears in A's list switcher within about 5 seconds, without a reload
 
+#### Scenario: Partner deletes the list I am viewing
+- **WHEN** user A has a list open and user B deletes that list
+- **THEN** within about 5 seconds A is taken to the start list and sees the notice "This list was deleted.", and polling stops without repeating errors
+
 #### Scenario: Hidden tab
 - **WHEN** the list page is in a background tab
 - **THEN** no version requests are sent until it becomes visible again

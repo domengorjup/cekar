@@ -256,6 +256,16 @@ The list switcher is `.chips.lists` of `a.chip` with a `span.n` count of uncheck
 
 A `form.row` with an `.avatar`, name and `.tag`, and a `label.switch` that submits on change (`data-autosubmit`); a `.help-card` row ends the group. List rows are `.row` with `a.row-link` and a `.move` form of two icon buttons (up, down).
 
+### Footer links (Settings page)
+
+`div.settings-links` below the last card on Settings: centred, holds icon-only `a.icon-btn` links (`aria-label` and `title` from the catalog, `target="_blank" rel="noopener"` because the app runs in the Ingress iframe and GitHub refuses to load in a frame). Currently GitHub (`github`) and Documentation (`book-open-variant`). Same element as glovebox's `.manage-links`.
+
+```html
+<div class="settings-links">
+  <a class="icon-btn" href="https://github.com/domengorjup/cekar" target="_blank" rel="noopener" aria-label="{{ t('settings.github') }}" title="{{ t('settings.github') }}">{{ icon('github', 24) }}</a>
+</div>
+```
+
 ### Page-specific layouts
 
 Pages not covered above (Who are you?, Login) use `.page-title`, a `.card.list-card` of rows and a `.card.form`.

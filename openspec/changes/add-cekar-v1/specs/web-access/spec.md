@@ -88,3 +88,4 @@ Pages SHALL load without internet access. All scripts, styles, icons and fonts S
 #### Scenario: Offline page load
 - **WHEN** any page is rendered
 - **THEN** it references no external hosts
+- **AND** the only exceptions are the GitHub and documentation links at the bottom of Settings, which open in a new tab and load nothing into the page

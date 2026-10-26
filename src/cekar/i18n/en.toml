@@ -268,6 +268,8 @@ move_down = "Move {name} down"
 who = "Who are you?"
 signed_in = "Signed in as"
 who_help = "Switch the person you act as."
+github = "Cekar on GitHub"
+docs = "Documentation"
 
 [member_off]
 title = "Turn off {name}?"

@@ -579,6 +579,7 @@ form.row { margin: 0; }
 .move { display: flex; margin: 0; }
 .move .icon-btn:first-child svg { transform: rotate(180deg); }
 .move .icon-btn:disabled { opacity: .3; }
+.settings-links { display: flex; justify-content: center; gap: 8px; margin: 24px 0 8px; }
 .row > button.row-link { background: none; border: 0; font: inherit; color: inherit; text-align: left; padding: 0; cursor: pointer; }
 
 /* row text blocks, section spacing */

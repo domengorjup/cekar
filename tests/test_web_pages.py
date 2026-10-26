@@ -15,6 +15,11 @@ WEB = Path(__file__).parent.parent / "src" / "cekar" / "web"
 PREFIX = "/api/hassio_ingress/abc123"
 LOCAL_URL = re.compile(r"""\b(?:href|src|action|formaction)="(/[^"]*)\"""")
 EXTERNAL_URL = re.compile(r"""\b(?:href|src|action|formaction)="(?:https?:)?//""")
+# The only external links: the footer links on Settings (new tab, no resources loaded).
+EXTERNAL_LINKS = (
+    "https://github.com/domengorjup/cekar",
+    "https://domengorjup.github.io/cekar/",
+)
 
 
 @pytest.fixture
@@ -82,9 +87,17 @@ def test_dialogs_render_without_page_chrome(household, pages):
 def test_urls_follow_the_ingress_prefix_and_stay_local(household, pages):
     for path in pages:
         text = household.get(path, headers={"X-Ingress-Path": PREFIX}).text
+        for link in EXTERNAL_LINKS:
+            text = text.replace(f'href="{link}" target="_blank"', "")
         assert not EXTERNAL_URL.search(text), path
         for target in LOCAL_URL.findall(text):
             assert target.startswith(PREFIX + "/"), (path, target)
+
+
+def test_settings_has_github_and_documentation_links(household):
+    text = household.get("/settings").text
+    for link, label in zip(EXTERNAL_LINKS, ("Cekar on GitHub", "Documentation")):
+        assert f'href="{link}" target="_blank" rel="noopener" aria-label="{label}"' in text
 
 
 def test_expenses_page_shows_money_and_balance(household, pages):

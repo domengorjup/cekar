@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+- Small GitHub and Documentation icon links at the bottom of Settings.
+
 ## 0.1.2
 
 - If someone deletes the list you are viewing, you are taken to the start list with a notice.

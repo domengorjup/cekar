@@ -175,9 +175,9 @@ h2 { font-size: 14px; font-weight: 500; color: var(--secondary-text-color); marg
 .row:focus-visible { outline: 2px solid var(--primary-color); outline-offset: -2px; }
 .badge {
   width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; flex: none;
-  color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent);
+  color: var(--c, var(--primary-color)); background: color-mix(in srgb, var(--c, var(--primary-color)) 16%, transparent);
 }
-/* Row badge colours (TBD for cekar): set --c per kind, e.g. .t-<kind> { --c: var(--color-1); } */
+/* Badge colour is --c (primary when unset); the kinds .t-<kind> set --c (see "expenses" below). */
 .row .body { flex: 1; min-width: 0; }
 .row .title { font-size: 15px; font-weight: 500; }
 .row .detail { color: var(--secondary-text-color); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -302,7 +302,6 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
 
 /* ---------- manage ---------- */
 .list-card .row { min-height: 64px; }
-.list-card .badge { background: color-mix(in srgb, var(--primary-color) 14%, transparent); color: var(--primary-color); --c: var(--primary-color); }
 .row .chev { color: var(--secondary-text-color); }
 
 /* ---------- phone ---------- */

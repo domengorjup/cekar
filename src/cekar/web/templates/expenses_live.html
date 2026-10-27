@@ -81,7 +81,7 @@
       <details class="trip-wrap" id="trip-{{ row.trip_id }}">
         <summary class="row trip-row">
           <span class="badge t-trip">{{ icon('cart-check', 22) }}</span>
-          <span class="body"><span class="title">{{ t('trip.row_title', list=row.list_name) }}</span>
+          <span class="body"><span class="title">{{ t('trip.row_title', list=row.list_name) if row.list_name != t('list.default_name') else t('trip.row_title_plain') }}</span>
             <span class="detail">{{ t('expense.paid_by', name=row.payer_name) }} · <span class="nw">{{ date(row.spent_on) }}</span> · {{ tn('trip.expense_count', row.expenses | length) }}</span></span>
           <span class="side"><span class="amount">{{ money(row.total_cents) }}</span><span class="party">{{ viewer_text(row.viewer) }}</span></span>
           <span class="chev">{{ icon('chevron-down') }}</span>

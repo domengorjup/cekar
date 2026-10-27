@@ -83,10 +83,16 @@ def list_chips(request: Request, session: SessionDep, user: CurrentUser, list_id
 # --- list CRUD (fixed paths before /lists/{list_id}) ---------------------------
 
 
+def _section(next_path: str) -> str:
+    """Tab to highlight for a list dialog opened from Settings or from Lists."""
+    return "settings" if next_path.startswith("/settings") else "lists"
+
+
 def _list_form(request, user, *, list_id=None, name="", errors=None, status=200, next_path=""):
     return render(
         request, "list_form.html", status, user=user, list_id=list_id, typed_name=name,
-        errors=errors or [], next_path=next_path,
+        errors=errors or [], next_path=next_path, name_max=lists.LIST_NAME_MAX_LENGTH,
+        section=_section(next_path),
     )
 
 
@@ -241,7 +247,8 @@ def list_delete_confirm(request: Request, session: SessionDep, user: CurrentUser
         raise _not_found(exc) from exc
     count = len(view.unchecked) + len(view.checked)
     return render(request, "list_delete.html", user=user, list=view.list, count=count,
-                  next_path=safe_next(next) if next else "")
+                  next_path=safe_next(next) if next else "",
+                  section=_section(next))
 
 
 @router.post("/lists/{list_id}/delete")

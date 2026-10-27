@@ -37,7 +37,7 @@ def _form_page(request, session, user, *, f, payment_id=None, errors=None, warni
     except ServiceError as exc:
         raise _not_found(exc) from exc
     return render(
-        request, "payment_form.html", status, user=user, f=f, payment_id=payment_id,
+        request, "payment_form.html", status, user=user, section="expenses", f=f, payment_id=payment_id,
         from_user=from_user, to_user=to_user, owed=_owed(session, f["from"], f["to"]),
         errors=errors or [], warnings=warnings or [],
     )
@@ -56,17 +56,19 @@ def settle_form(request: Request, session: SessionDep, user: CurrentUser,
 
 
 def _save(request, session, user, f, payment_id=None):
-    """Check, warn about an over-payment once, then save."""
+    """Check, warn about an over-payment once per amount, then save."""
     try:
         try:
             paid_on = date.fromisoformat(f["date"])
         except ValueError:
             raise ServiceError("error.date.invalid") from None
         data = balances.PaymentInput(f["from"], f["to"], parse_amount(f["amount"]), paid_on)
-        warnings = [] if f["confirmed"] else balances.check_payment(
+        # "confirmed" holds the amount (cents) the user was warned about; a
+        # different amount is checked, and warned about, again.
+        warnings = [] if f["confirmed"] == str(data.amount_cents) else balances.check_payment(
             session, data, payment_id=payment_id)
         if warnings:
-            f = {**f, "confirmed": "1"}
+            f = {**f, "confirmed": str(data.amount_cents)}
             return _form_page(request, session, user, f=f, payment_id=payment_id,
                               warnings=[error_text(w) for w in warnings])
         if payment_id is None:

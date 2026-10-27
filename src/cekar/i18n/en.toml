@@ -45,6 +45,9 @@ user_menu = "User menu"
 # Validation messages raised by the services (ServiceError keys).
 [error]
 not_found = "This no longer exists. It may have been deleted."
+generic = "Something went wrong. Please try again."
+whole_numbers = "Enter whole numbers only."
+to_lists = "Back to Lists"
 
 [error.amount]
 required = "Enter an amount."
@@ -68,6 +71,7 @@ quantity_too_long = "A quantity can have at most {max_length} characters."
 for_whom_not_member = "Only members of shared expenses can be chosen here."
 
 [error.expense]
+unknown_split = "Choose how the expense is split."
 fewer_than_two_members = "Shared expenses need at least two members. Tick them in Settings."
 title_required = "Enter a title."
 title_too_long = "A title can have at most {max_length} characters."
@@ -155,7 +159,6 @@ name = "Name"
 edit = "Edit item"
 for_label = "For whom"
 for_shared = "Shared"
-for_nobody = "Nobody (shared)"
 for_help = "Only members of shared expenses can be picked."
 for_person = "For {name}"
 added_by = "Added by {name}"
@@ -177,6 +180,7 @@ clear_title = "Clear the checked items?"
 clear_body = "Expenses need at least two members, so no expense is recorded. The checked items are cleared."
 clear_confirm = "Clear checked"
 row_title = "Shopping trip · {list}"
+row_title_plain = "Shopping trip"
 cleared.one = "{n} checked item cleared."
 cleared.other = "{n} checked items cleared."
 saved.one = "Shopping trip saved: {n} expense recorded, checked items cleared."
@@ -252,7 +256,8 @@ owed_now = "Currently owed: {amount}. A smaller amount is fine."
 
 [settings]
 members = "Shared expenses"
-members_help = "Tick who takes part in shared expenses. Everyone can use the shopping lists. Other people appear here once they have opened Cekar."
+members_help = "Tick who takes part in shared expenses. Everyone can use the shopping lists."
+members_help_people = "Other people appear here once they have opened Cekar."
 member_of = "Member of shared expenses"
 from_ha = "Home Assistant user"
 added_by_hand = "Added by hand"

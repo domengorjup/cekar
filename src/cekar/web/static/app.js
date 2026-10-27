@@ -9,9 +9,18 @@
   var SNACKBAR_MS = 10000;
   var overlay = document.getElementById("overlay");
 
+  function text(name) { return document.body.getAttribute("data-" + name) || ""; }
+
   function fail(error) {
     console.error(error);
-    toast(error.message || String(error));
+    toast(text("msg-failed"));
+  }
+
+  // The thing the dialog points at is gone (404) or the server failed: say so
+  // and reload, so a deleted row disappears from the page behind.
+  function requestFailed(response) {
+    toast(text(response.status === 404 ? "msg-gone" : "msg-failed"));
+    setTimeout(function () { window.location.reload(); }, 1500);
   }
 
   function formBody(form, submitter) {
@@ -33,8 +42,10 @@
 
   function openDialog(href) {
     fetch(href, { headers: DIALOG_HEADER, credentials: "same-origin" })
-      .then(function (r) { return r.text(); })
-      .then(show)
+      .then(function (r) {
+        if (!r.ok) { requestFailed(r); return null; }
+        return r.text().then(show);
+      })
       .catch(function () { window.location.href = href; });
   }
 
@@ -46,7 +57,7 @@
       headers: Object.assign({}, FORM_HEADER, DIALOG_HEADER)
     }).then(function (r) {
       if (r.redirected) { window.location.href = r.url; return null; }
-      if (!r.ok && r.status !== 422) { form.submit(); return null; }
+      if (!r.ok && r.status !== 422) { requestFailed(r); return null; }
       return r.text().then(show);
     }).catch(function () { form.submit(); });
   }
@@ -312,13 +323,14 @@
     var button = document.createElement("button");
     button.type = "button";
     button.className = "for-toggle";
-    button.setAttribute("aria-label", select.getAttribute("aria-label"));
+    var label = select.getAttribute("aria-label");
     function draw() {
       var person = select.selectedIndex > 0;
       var icon = person ? "account" : "account-multiple";
       button.classList.toggle("on", person);
       button.innerHTML = '<svg class="mdi" width="18" height="18" aria-hidden="true"><use href="' + sprite + "#" + icon + '"/></svg><span></span>';
       button.lastChild.textContent = select.options[select.selectedIndex].text;
+      button.setAttribute("aria-label", label + ": " + button.lastChild.textContent);
     }
     button.addEventListener("click", function () {
       select.selectedIndex = (select.selectedIndex + 1) % select.options.length;
@@ -426,6 +438,7 @@
   function initTripForm(form) {
     var data = JSON.parse(form.getAttribute("data-trip"));
     var box = form.querySelector("#trip-preview");
+    var head = form.querySelector("#trip-preview-head");
     var submit = form.querySelector("button[type=submit]");
     var sprite = document.body.getAttribute("data-sprite");
     function icon(name) {
@@ -452,6 +465,7 @@
         if (cents) { sum += cents; (byPerson[item.for] = byPerson[item.for] || []).push({ item: item, cents: cents }); }
       });
       box.innerHTML = "";
+      head.hidden = true;
       if (total === null) { submit.disabled = false; return; }
       if (sum > total) {
         var alert = document.createElement("div");
@@ -463,6 +477,7 @@
         return;
       }
       submit.disabled = false;
+      head.hidden = false;
       var list = document.createElement("div");
       list.className = "mini-list";
       data.members.forEach(function (id) {

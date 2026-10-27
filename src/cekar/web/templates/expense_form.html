@@ -16,7 +16,7 @@
 {% call dialog(request, heading, action, '/expenses', extra) %}
   <div class="dialog-body">
     {{ messages(errors) }}
-    {{ field(t('expense.title'), 'title', f.title, placeholder=t('expense.title_placeholder'), required=True) }}
+    {{ field(t('expense.title'), 'title', f.title, placeholder=t('expense.title_placeholder'), required=True, maxlength=title_max) }}
     <div class="grid2">
       {{ field(t('expense.amount'), 'amount', f.amount, suffix='€', inputmode='decimal', required=True) }}
       {{ field(t('common.date'), 'date', f.date, type='date', required=True) }}

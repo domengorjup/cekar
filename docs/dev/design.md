@@ -81,7 +81,7 @@ Letting the user pick which cards are shown (the **Customise** popover, `details
 
 ### List card and rows
 
-A card containing rows. A row is a whole-row link or button with a round badge, title, detail lines, and either an amount/date block (`.side`) or a chevron (`.chev`). Use it for list items, expense entries and settings entries. Grouping rows under `.month-head` headings is available; whether cekar uses it is TBD.
+A card containing rows. A row is a whole-row link or button with a round badge, title, detail lines, and either an amount/date block (`.side`) or a chevron (`.chev`). Use it for list items, expense entries and settings entries. A badge takes its colour from `--c` (set by a kind class such as `.t-payment`); without one it uses the primary colour. Grouping rows under `.month-head` headings is available; whether cekar uses it is TBD.
 
 ```html
 <div class="card list-card">
@@ -164,6 +164,7 @@ Use the macros from `_macros.html`; they produce HA's filled text field (label a
 
 ```jinja
 {{ field('Amount', 'amount', f.amount, suffix='&euro;', inputmode='decimal', required=True) }}
+{# text fields that the server limits take maxlength=..., e.g. maxlength=title_max #}
 {{ select('List', 'list_id', options, selected) }}
 {{ switch('shared', 'Shared', 'Split between all members', f.shared) }}
 {{ textarea('Notes', 'notes', f.notes) }}
@@ -189,7 +190,7 @@ A native `<details>` with a `<summary>`; no custom widget. Used for archived ite
 
 ### Empty state
 
-`<div class="empty">No entries</div>` inside the place where the content would be (inside a `.card` when a card is expected). One short sentence; if the user can fix it, add a primary button under it.
+`<div class="empty">No entries</div>` inside the place where the content would be (inside a `.card` when a card is expected). One short sentence; if the user can fix it, add a primary button under it. Error pages (`error.html`, shown for 4xx/5xx on HTML routes) use it with a "Back to Lists" button.
 
 ### Snackbar (delete and undo)
 
@@ -229,7 +230,7 @@ A native `<details>` with a `<summary>`; no custom widget. Used for archived ite
 
 ### Collapsed trip row
 
-A shopping trip is one `details.trip-wrap` in the month's list card. `summary.row.trip-row` has the trip badge (`.t-trip`), "Shopping trip · List", the paid by line with the expense count, the total (and "you lent") on the right and a chevron; the open state shows the trip's expenses in `.trip-children`. Expense and payment rows use badge kinds `.t-equal`, `.t-for`, `.t-personal`, `.t-exact`, `.t-payment` (icon and tint per kind).
+A shopping trip is one `details.trip-wrap` in the month's list card. `summary.row.trip-row` has the trip badge (`.t-trip`), "Shopping trip · List" (just "Shopping trip" when the list has the default name), the paid by line with the expense count, the total (and "you lent") on the right and a chevron; the open state shows the trip's expenses in `.trip-children`. Expense and payment rows use badge kinds `.t-equal`, `.t-for`, `.t-personal`, `.t-exact`, `.t-payment` (icon and tint per kind).
 
 ### Alerts
 

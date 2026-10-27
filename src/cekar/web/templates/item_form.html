@@ -8,7 +8,7 @@
     {{ messages(errors) }}
     {{ field(t('item.name'), 'name', f.name, required=True) }}
     {{ field(t('item.qty_label'), 'quantity', f.quantity, placeholder=t('item.qty_placeholder')) }}
-    {% set options = [('', t('item.for_nobody'))] %}
+    {% set options = [('', t('item.for_shared'))] %}
     {% for m in members %}{% set _ = options.append((m.id, m.display_name)) %}{% endfor %}
     {{ select(t('item.for_label'), 'for_whom', options, f.for_whom) }}
     <div class="help">{{ t('item.for_help') }}</div>

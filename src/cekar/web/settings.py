@@ -68,7 +68,8 @@ def person_new(request: Request, user: CurrentUser):
     """Dialog: add a person by name."""
     if not _can_add_person(request):
         raise HTTPException(status_code=404)
-    return render(request, "person_form.html", user=user, typed_name="", errors=[])
+    return render(request, "person_form.html", user=user, typed_name="", errors=[],
+                  section="settings", name_max=members.NAME_MAX_LENGTH)
 
 
 @router.post("/settings/people/new")
@@ -82,5 +83,6 @@ def person_create(request: Request, session: SessionDep, user: CurrentUser,
     except ServiceError as exc:
         session.rollback()
         return render(request, "person_form.html", 422, user=user, typed_name=name,
-                      errors=[error_text(exc)])
+                      errors=[error_text(exc)], section="settings",
+                      name_max=members.NAME_MAX_LENGTH)
     return redirect(request, "/settings")

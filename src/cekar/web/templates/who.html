@@ -4,6 +4,7 @@
 {% block content %}
 <div class="page-title"><h1>{{ t('who.title') }}</h1></div>
 <div class="help flush">{{ t('who.help') }}</div>
+{% if people %}
 <div class="card list-card">
   {% for p in people %}
   <form class="row" method="post" action="{{ url(request, '/who') }}">
@@ -15,10 +16,11 @@
   </form>
   {% endfor %}
 </div>
+{% endif %}
 <div class="summary-head"><h2>{{ t('who.new_title') }}</h2></div>
 <form class="card form" method="post" action="{{ url(request, '/who/add') }}">
   {{ messages(errors) }}
-  {{ field(t('settings.person_name'), 'name', typed_name, required=True) }}
+  {{ field(t('settings.person_name'), 'name', typed_name, required=True, maxlength=name_max) }}
   <div class="dialog-foot"><button type="submit" class="btn primary">{{ t('who.add') }}</button></div>
 </form>
 {% endblock %}

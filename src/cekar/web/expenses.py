@@ -10,6 +10,7 @@ from fastapi.responses import HTMLResponse, PlainTextResponse
 from cekar.identity import CurrentUser
 from cekar.models import Split
 from cekar.services import ServiceError, balances, expenses, members
+from cekar.i18n import t
 from cekar.web.common import SessionDep, error_text, redirect, render
 from cekar.web.formatting import format_cents, parse_amount
 from cekar.web.ui import FormData, deleted_redirect
@@ -126,7 +127,7 @@ def _parse(form, member_ids: list[str]) -> expenses.ExpenseInput:
     try:
         split = Split(form.get("split", "equal"))
     except ValueError:
-        raise HTTPException(status_code=422, detail="unknown split") from None
+        raise HTTPException(status_code=422, detail=t("error.expense.unknown_split")) from None
     payer = form.get("payer", "")
     for_user = form.get("for_user") or None
     if split is Split.FOR_OTHER and for_user is None:
@@ -156,7 +157,8 @@ def _form_page(request, session, user, *, expense_id=None, entered=None, errors=
         }
     return render(
         request, "expense_form.html", status, user=user, expense_id=expense_id, f=entered,
-        errors=errors or [], members=member_list,
+        errors=errors or [], members=member_list, section="expenses",
+        title_max=expenses.TITLE_MAX_LENGTH,
     )
 
 

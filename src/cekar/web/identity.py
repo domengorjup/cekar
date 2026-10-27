@@ -17,7 +17,7 @@ router = APIRouter()
 
 def _page(request, session, *, errors=None, name="", status=200):
     return render(
-        request, "who.html", status, user=resolve_user(request, session), section="",
+        request, "who.html", status, user=resolve_user(request, session), section="", name_max=members.NAME_MAX_LENGTH,
         people=members.list_users(session), errors=errors or [], typed_name=name,
     )
 

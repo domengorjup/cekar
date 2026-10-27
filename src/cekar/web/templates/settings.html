@@ -20,7 +20,7 @@
     <noscript><button type="submit" class="btn">{{ t('common.save') }}</button></noscript>
   </form>
   {% endfor %}
-  <div class="help-card">{{ t('settings.members_help') }}</div>
+  <div class="help-card">{{ t('settings.members_help') }}{% if via_ha(request) %} {{ t('settings.members_help_people') }}{% endif %}</div>
 </div>
 
 <div class="summary-head"><h2>{{ t('settings.lists') }}</h2>

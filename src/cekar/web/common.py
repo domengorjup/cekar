@@ -6,8 +6,10 @@ from datetime import date
 from typing import Annotated, Any
 
 from fastapi import Depends, HTTPException, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from cekar.db import get_session
 from cekar.i18n import t
@@ -82,7 +84,7 @@ def parse_date(text: str | None, name: str) -> date | None:
     try:
         return date.fromisoformat(text)
     except ValueError:
-        raise _bad_request(f"{name}: '{text}' is not a date (YYYY-MM-DD)") from None
+        raise _bad_request(t("error.date.invalid")) from None
 
 
 def parse_ints(values: list[str], name: str) -> tuple[int, ...]:
@@ -90,4 +92,24 @@ def parse_ints(values: list[str], name: str) -> tuple[int, ...]:
     try:
         return tuple(int(v) for v in values if v != "")
     except ValueError:
-        raise _bad_request(f"{name}: expected whole numbers") from None
+        raise _bad_request(t("error.whole_numbers")) from None
+
+
+async def html_error_page(request: Request, exc: StarletteHTTPException):
+    """
+    Exception handler: a page with a way back instead of raw JSON.
+
+    Only client and server errors on HTML routes get the page. Redirects
+    (the identity picker uses a 303), ``/api`` and ``/static`` keep the default
+    JSON response.
+    """
+    path = request.url.path
+    if exc.status_code < 400 or path.startswith(("/api", "/static")):
+        return await http_exception_handler(request, exc)
+    if exc.status_code == 404:
+        message = t("error.not_found")
+    elif exc.status_code == 422 and isinstance(exc.detail, str):
+        message = exc.detail  # raised by the web layer for input the user can fix
+    else:
+        message = t("error.generic")
+    return render(request, "error.html", exc.status_code, user=None, message=message)

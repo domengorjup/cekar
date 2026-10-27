@@ -26,7 +26,7 @@
            aria-label="{{ t('item.add_label') }}" maxlength="100" autocomplete="off" enterkeyhint="done">
     <input name="quantity" type="text" value="{{ entered.quantity }}" placeholder="{{ t('item.qty_short') }}"
            aria-label="{{ t('item.qty_label') }}" maxlength="30" autocomplete="off">
-    {% if members %}
+    {% if members | length > 1 %}
     <select name="for_whom" class="for-pick" aria-label="{{ t('item.for_label') }}"{% if members | length <= 2 %} data-cycle{% endif %}>
       <option value="">{{ t('item.for_shared') }}</option>
       {% for m in members %}<option value="{{ m.id }}" {{ 'selected' if entered.for_whom == m.id }}>{{ m.display_name }}</option>{% endfor %}

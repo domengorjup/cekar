@@ -32,6 +32,8 @@ The path is the part after your Home Assistant address when Cekar is open in the
 
 In the add-on, Cekar uses your Home Assistant user. The first time you open it, you are added to the list of people automatically. Other household members appear in **Settings** only after they have opened Cekar once themselves.
 
+Standalone, nobody appears by themselves: people are added by hand, either on **Who are you?** or with **Add person** in **Settings**.
+
 If Cekar cannot tell who you are (standalone mode, or a client that does not pass the user), it shows **Who are you?**. Pick your name, or add yourself under **Not in the list?**. Cekar remembers the choice on that device. You can change it later in **Settings > Who are you?**.
 
 ## Choose the members

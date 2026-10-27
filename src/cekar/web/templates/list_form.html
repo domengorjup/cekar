@@ -8,7 +8,7 @@
   <div class="dialog-body">
     {{ messages(errors) }}
     <input type="hidden" name="next" value="{{ next_path }}">
-    {{ field(t('list.name'), 'name', typed_name, required=True) }}
+    {{ field(t('list.name'), 'name', typed_name, required=True, maxlength=name_max) }}
   </div>
   <div class="dialog-foot">
     {% if list_id %}

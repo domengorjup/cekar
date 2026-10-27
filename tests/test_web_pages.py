@@ -215,3 +215,80 @@ def test_deleted_list_polls_return_404_and_start_page_shows_notice(household, pe
     assert "This list was deleted." not in page
     assert "This list was deleted." in household.get("/?gone=1").text
     assert "This list was deleted." not in household.get("/").text
+
+
+def test_html_routes_show_an_error_page_with_a_way_back(household):
+    for path in ("/lists/nope", "/expenses/nope/edit", "/payments/nope/edit"):
+        page = household.get(path)
+        assert page.status_code == 404
+        assert "text/html" in page.headers["content-type"]
+        assert "This no longer exists" in page.text and "Back to Lists" in page.text
+    # A settle link with unknown people is also a page, not JSON.
+    page = household.get("/settle?debtor=x&creditor=y")
+    assert page.status_code == 404 and "Back to Lists" in page.text
+
+
+def test_unknown_split_is_a_translated_error_page(household, people, session):
+    _setup(household, people, session)
+    bad = household.post("/expenses/new", data={
+        "title": "X", "amount": "1", "date": "2026-10-17", "payer": people.ana.id,
+        "split": "nonsense"})
+    assert bad.status_code == 422 and "Choose how the expense is split." in bad.text
+
+
+def test_api_errors_stay_json(client):
+    page = client.get("/api/v1/nope")
+    assert page.status_code == 404
+    assert page.headers["content-type"].startswith("application/json")
+
+
+def test_settle_overpay_warns_again_when_the_amount_changes(household, people):
+    base = {"debtor": people.bor.id, "creditor": people.ana.id, "date": "2026-10-18"}
+    # Bor owes Ana 35/3 - 5 = 6.67 after the setup; use clearly too-high amounts.
+    first = household.post("/settle", data={**base, "amount": "90"})
+    assert first.status_code == 200 and "more than is owed" in first.text
+    confirmed = re.search(r'name="confirmed" value="(\d*)"', first.text).group(1)
+    assert confirmed == "9000"
+    # Same amount, confirmed: saved.
+    ok = household.post("/settle", data={**base, "amount": "90", "confirmed": confirmed})
+    assert ok.status_code == 303
+
+
+def test_settle_overpay_changed_amount_is_warned_about_again(household, people, session):
+    _setup(household, people, session)
+    base = {"debtor": people.bor.id, "creditor": people.ana.id, "date": "2026-10-18"}
+    first = household.post("/settle", data={**base, "amount": "90"})
+    assert "more than is owed" in first.text
+    confirmed = re.search(r'name="confirmed" value="(\d*)"', first.text).group(1)
+    again = household.post("/settle", data={**base, "amount": "95", "confirmed": confirmed})
+    assert again.status_code == 200 and "more than is owed" in again.text
+
+
+def test_members_help_mentions_other_people_only_inside_home_assistant(household, client):
+    assert "appear here" in household.get("/settings").text
+    assert "appear here" not in client.get("/settings").text
+
+
+def test_add_field_has_no_for_toggle_with_one_member(client, add_user, session):
+    ana = add_user("Ana")
+    session.commit()
+    client.post("/who", data={"user_id": ana.id})
+    page = client.post("/lists/new", data={"name": "Weekly"})  # follows the redirect
+    assert page.status_code == 200
+    assert "data-add" in page.text and 'name="for_whom"' not in page.text
+
+
+def test_dialog_pages_highlight_their_tab(household, people, session):
+    _setup(household, people, session)
+    def active(path):
+        html = household.get(path).text
+        return re.search(r'class="tab active"[^>]*href="[^"]*/([a-z]*)"', html).group(1)
+    assert active("/expenses/new") == "expenses"
+    assert active(f"/settle?debtor={people.bor.id}&creditor={people.ana.id}") == "expenses"
+    assert active("/lists/new?next=/settings") == "settings"
+
+
+def test_text_fields_carry_the_server_limits(household, people, session):
+    _setup(household, people, session)
+    assert 'maxlength="100"' in household.get("/expenses/new").text
+    assert 'maxlength="50"' in household.get("/lists/new").text

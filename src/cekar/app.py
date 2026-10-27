@@ -11,6 +11,7 @@ from dataclasses import replace
 import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from sqlalchemy import Engine
 
 from cekar import __version__
@@ -24,6 +25,7 @@ from cekar.db import (
     run_migrations,
 )
 from cekar.web import router as web_router
+from cekar.web.common import html_error_page
 from cekar.web.templating import STATIC_DIR
 
 logger = logging.getLogger(__name__)
@@ -61,6 +63,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     app.state.engine = engine
     app.state.session_factory = make_session_factory(engine)
     install_auth(app)
+    app.add_exception_handler(StarletteHTTPException, html_error_page)
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
     app.include_router(web_router)
     app.include_router(v1.router)

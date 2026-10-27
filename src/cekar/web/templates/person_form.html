@@ -5,7 +5,7 @@
 {% call dialog(request, t('settings.add_person'), '/settings/people/new', '/settings') %}
   <div class="dialog-body">
     {{ messages(errors) }}
-    {{ field(t('settings.person_name'), 'name', typed_name, required=True) }}
+    {{ field(t('settings.person_name'), 'name', typed_name, required=True, maxlength=name_max) }}
     <div class="help flush">{{ t('settings.person_help') }}</div>
   </div>
   {{ dialog_foot(request, '/settings', t('common.save')) }}

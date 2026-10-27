@@ -1,0 +1,8 @@
+{% extends layout %}
+{% block title %}{{ t('app.name') }}{% endblock %}
+{% block content %}
+<div class="empty">
+  <p>{{ message }}</p>
+  <a class="btn primary" href="{{ url(request, '/') }}">{{ t('error.to_lists') }}</a>
+</div>
+{% endblock %}

@@ -13,7 +13,7 @@
 
 {# Filled text field. #}
 {% macro field(label, name, value='', type='text', suffix=None, inputmode=None, step=None,
-               required=False, list=None, placeholder=None) %}
+               required=False, list=None, placeholder=None, maxlength=None) %}
   <div class="field{{ ' has-suffix' if suffix }}">
     <label for="i-{{ name }}">{{ label }}</label>
     <input id="i-{{ name }}" name="{{ name }}" value="{{ value }}" type="{{ type }}"
@@ -21,6 +21,7 @@
       {%- if step %} step="{{ step }}"{% endif %}
       {%- if list %} list="{{ list }}"{% endif %}
       {%- if placeholder %} placeholder="{{ placeholder }}"{% endif %}
+      {%- if maxlength %} maxlength="{{ maxlength }}"{% endif %}
       {%- if required %} required{% endif %}>
     {% if suffix %}<span class="suffix">{{ suffix }}</span>{% endif %}
   </div>

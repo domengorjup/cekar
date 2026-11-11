@@ -18,14 +18,23 @@ router = APIRouter()
 PRICE_PREFIX = "price_"
 
 
-def _form_page(request, session, user, list_id, *, entered=None, errors=None, status=200):
+def _form_data(request, session, user, list_id):
+    """Form data for the checked items; ``None`` if they are gone (go back to the list)."""
     try:
-        form = trips.trip_form_data(session, list_id, user.id)
+        return trips.trip_form_data(session, list_id, user.id)
     except ServiceError as exc:
         if exc.key == "error.trip.no_checked_items":
             # Someone else cleared the items meanwhile: back to the list.
-            return redirect(request, f"/lists/{list_id}")
+            return None
         raise HTTPException(status_code=404, detail=error_text(exc)) from exc
+
+
+def _form_page(request, session, user, list_id, *, entered=None, errors=None, status=200):
+    form = _form_data(request, session, user, list_id)
+    if form is None:
+        return redirect(request, f"/lists/{list_id}")
+    if not form.enough_members:
+        return redirect(request, f"/lists/{list_id}/done")
     entered = entered or {
         "total": "", "date": date.today().isoformat(), "payer": form.default_payer_id or "",
     }
@@ -36,6 +45,16 @@ def _form_page(request, session, user, list_id, *, entered=None, errors=None, st
 
 
 @router.get("/lists/{list_id}/done", response_class=HTMLResponse)
+def trip_choice(request: Request, session: SessionDep, user: CurrentUser, list_id: str):
+    """Dialog: clear the checked items or add them to expenses (one member: clear)."""
+    form = _form_data(request, session, user, list_id)
+    if form is None:
+        return redirect(request, f"/lists/{list_id}")
+    count = len(form.priced) + len(form.shared)
+    return render(request, "trip_choice.html", 200, user=user, form=form, count=count)
+
+
+@router.get("/lists/{list_id}/done/expense", response_class=HTMLResponse)
 def trip_form(request: Request, session: SessionDep, user: CurrentUser, list_id: str):
     """Dialog: receipt total, date, payer and the prices of items for one person."""
     return _form_page(request, session, user, list_id)
@@ -59,9 +78,10 @@ def _parse(form, trip_form_data) -> trips.TripInput:
 
 
 @router.post("/lists/{list_id}/done")
+@router.post("/lists/{list_id}/done/expense")
 def trip_save(request: Request, session: SessionDep, user: CurrentUser, list_id: str,
               form: FormData):
-    """Record the trip and clear the checked items."""
+    """Record the trip and clear the checked items (with one member: only clear)."""
     entered = {k: str(v) for k, v in form.items()}
     try:
         trip_form_data = trips.trip_form_data(session, list_id, user.id)

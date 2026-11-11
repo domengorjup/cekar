@@ -51,11 +51,11 @@ def test_shopping_trip_to_settled(ana_and_bor):
     assert "2 checked items" in bor_client.get(list_path).text
 
     # Done shopping: Bor paid EUR 30, the razor cost EUR 10 and is for Bor.
-    form = bor_client.get(f"/lists/{list_id}/done")
+    form = bor_client.get(f"/lists/{list_id}/done/expense")
     assert form.status_code == 200 and "Receipt total" in form.text
     price_field = _id(form.text, r'name="(price_[0-9a-f-]{36})"')
     done = bor_client.post(
-        f"/lists/{list_id}/done",
+        f"/lists/{list_id}/done/expense",
         data={"total": "30,00", "date": "2026-10-18", "payer": bor.id, price_field: "10"},
     )
     assert done.status_code == 303 and done.headers["location"].endswith("/expenses?trip=2")
@@ -147,6 +147,98 @@ def test_done_shopping_form_has_the_preview_hooks(ana_and_bor):
     ana.post(f"/lists/{list_id}/items", data={"name": "Razor", "for_whom": bor.id})
     item_id = _id(ana.get(list_path).text, r"/items/([0-9a-f-]{36})/check")
     ana.post(f"/items/{item_id}/check", data={"checked": "1"})
-    form = ana.get(f"/lists/{list_id}/done").text
+    form = ana.get(f"/lists/{list_id}/done/expense").text
     assert "data-trip=" in form and 'id="trip-preview"' in form
     assert "What will be recorded" in form
+
+
+def _checked_list(ana, names):
+    list_path = ana.post("/lists/new", data={"name": "Weekly"}).headers["location"]
+    list_id = list_path.rsplit("/", 1)[1]
+    for name in names:
+        ana.post(f"/lists/{list_id}/items", data={"name": name})
+    for item_id in re.findall(r"/items/([0-9a-f-]{36})/check", ana.get(list_path).text):
+        ana.post(f"/items/{item_id}/check", data={"checked": "1"})
+    return list_path, list_id
+
+
+def test_list_page_has_only_done_shopping_button(ana_and_bor):
+    ana, *_ = ana_and_bor
+    list_path, list_id = _checked_list(ana, ["Eggs"])
+    page = ana.get(list_path).text
+    assert f"/lists/{list_id}/done" in page and "Done shopping" in page
+    assert "Clear checked" not in page and f'/lists/{list_id}/clear"' not in page
+
+
+def test_choice_dialog_offers_both_options(ana_and_bor):
+    ana, *_ = ana_and_bor
+    _, list_id = _checked_list(ana, ["Eggs", "Flour"])
+    dialog = ana.get(f"/lists/{list_id}/done")
+    assert dialog.status_code == 200
+    assert "2 checked items will be cleared from the list." in dialog.text
+    assert f'action="/lists/{list_id}/clear"' in dialog.text and "Just clear" in dialog.text
+    assert f'href="/lists/{list_id}/done/expense"' in dialog.text
+    assert "Add to expenses" in dialog.text
+
+
+def test_choice_dialog_just_clear_keeps_undo(ana_and_bor):
+    ana, *_ = ana_and_bor
+    list_path, list_id = _checked_list(ana, ["Eggs", "Flour"])
+    cleared = ana.post(f"/lists/{list_id}/clear")
+    assert "Cleared 2 checked items" in ana.get(cleared.headers["location"]).text
+
+
+def test_trip_form_error_rerenders_at_the_expense_url(ana_and_bor):
+    ana, _, _, bor = ana_and_bor
+    list_path, list_id = _checked_list(ana, ["Eggs"])
+    bad = ana.post(
+        f"/lists/{list_id}/done/expense",
+        data={"total": "", "date": "2026-10-18", "payer": bor.id},
+    )
+    assert bad.status_code == 422
+    assert f'action="/lists/{list_id}/done/expense"' in bad.text
+    assert "Receipt total" in bad.text
+
+
+def test_single_member_dialog_only_clears(client, add_user, session):
+    ana = add_user("Ana")
+    session.commit()
+    client.post("/who", data={"user_id": ana.id})
+    page = client.post("/lists/new", data={"name": "Weekly"})
+    list_id = page.url.path.rsplit("/", 1)[1]
+    client.post(f"/lists/{list_id}/items", data={"name": "Eggs"})
+    item_id = _id(client.get(f"/lists/{list_id}").text, r"/items/([0-9a-f-]{36})/check")
+    client.post(f"/items/{item_id}/check", data={"checked": "1"})
+    dialog = client.get(f"/lists/{list_id}/done").text
+    assert "Clear the checked items?" in dialog
+    assert "Add to expenses" not in dialog and "Just clear" not in dialog
+    assert f'action="/lists/{list_id}/done"' in dialog
+    # No expense form without a second member: back to the choice.
+    form = client.get(f"/lists/{list_id}/done/expense")
+    assert form.status_code in (303, 200) and "Receipt total" not in form.text
+
+
+def test_check_after_an_hour_shows_auto_clear_notice_with_undo(
+    ana_and_bor, session, monkeypatch
+):
+    from datetime import timedelta
+
+    from cekar.models import Item, utc_now
+
+    ana, *_ = ana_and_bor
+    list_path, list_id = _checked_list(ana, ["Eggs", "Flour"])
+    for item in session.query(Item).all():
+        item.checked_at = utc_now() - timedelta(hours=2)
+    session.commit()
+    ana.post(f"/lists/{list_id}/items", data={"name": "Tea"})
+    tea = _id(ana.get(list_path).text, r"/items/([0-9a-f-]{36})/check")
+
+    response = ana.post(f"/items/{tea}/check", data={"checked": "1"})
+    page = ana.get(response.headers["location"]).text
+    assert "2 items from the last trip cleared." in page and "Undo" in page
+    assert "Eggs" not in page and "Tea" in page
+
+    restore = _id(page, r'action="([^"]*/lists/[0-9a-f-]{36}/unclear)"')
+    ana.post(restore)
+    back = ana.get(list_path).text
+    assert "Eggs" in back and "Flour" in back and "Tea" in back

@@ -30,6 +30,7 @@ RESTORE_PATHS: dict[str, str] = {
     "expense": "/expenses/{id}/restore",
     "payment": "/payments/{id}/restore",
     "clear": "/lists/{id}/unclear",  # id is the list
+    "autoclear": "/lists/{id}/unclear",
 }
 _UUID = re.compile(r"^[0-9a-f-]{36}$")
 _NAME_SHOWN = 60
@@ -76,9 +77,11 @@ def deleted_redirect(
     return RedirectResponse(url(request, path) + query, status_code=303)
 
 
-def cleared_redirect(request: Request, path: str, list_id: str, count: int) -> RedirectResponse:
-    """Redirect after "Clear checked"; the next page offers Undo (design D17)."""
-    query = f"?undo=clear&id={list_id}&n={count}"
+def cleared_redirect(
+    request: Request, path: str, list_id: str, count: int, *, auto: bool = False
+) -> RedirectResponse:
+    """Redirect after clearing items; the next page offers Undo (design D17)."""
+    query = f"?undo={'autoclear' if auto else 'clear'}&id={list_id}&n={count}"
     return RedirectResponse(url(request, path) + query, status_code=303)
 
 
@@ -99,11 +102,12 @@ def undo_info(request: Request) -> dict | None:
     row_id = request.query_params.get("id", "")
     if kind not in RESTORE_PATHS or not _UUID.match(row_id):
         return None
-    if kind == "clear":
+    if kind in ("clear", "autoclear"):
         count = request.query_params.get("n", "")
         if not count.isdigit():
             return None
-        return {"message": tn("undo.cleared", int(count)),
+        key = "list.auto_cleared" if kind == "autoclear" else "undo.cleared"
+        return {"message": tn(key, int(count)),
                 "restore": RESTORE_PATHS[kind].format(id=row_id)}
     name = request.query_params.get("name", "")[:_NAME_SHOWN]
     thing = t(f"undo.thing.{kind}")

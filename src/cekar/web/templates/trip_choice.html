@@ -1,0 +1,24 @@
+{% extends layout %}
+{% from "_macros.html" import confirm_dialog with context %}
+{% block title %}{{ t('trip.choice_title') }} - {{ t('app.name') }}{% endblock %}
+{% block content %}
+{% set close = '/lists/' ~ form.list_id %}
+{% if not form.enough_members %}
+{% call confirm_dialog(request, t('trip.clear_title'), '/lists/' ~ form.list_id ~ '/done') %}
+  <p>{{ t('trip.clear_body') }}</p>
+  <div class="dialog-foot">
+    <a class="btn" href="{{ url(request, close) }}" data-close>{{ t('common.cancel') }}</a>
+    <button type="submit" class="btn primary">{{ t('trip.clear_confirm') }}</button>
+  </div>
+{% endcall %}
+{% else %}
+{% call confirm_dialog(request, t('trip.choice_title'), '/lists/' ~ form.list_id ~ '/clear') %}
+  <p>{{ tn('trip.choice_body', count) }}</p>
+  <div class="dialog-foot">
+    <a class="btn" href="{{ url(request, close) }}" data-close>{{ t('common.cancel') }}</a>
+    <button type="submit" class="btn outline">{{ t('trip.just_clear') }}</button>
+    <a class="btn primary" href="{{ url(request, close ~ '/done/expense') }}" data-dialog>{{ t('trip.add_expense') }}</a>
+  </div>
+{% endcall %}
+{% endif %}
+{% endblock %}

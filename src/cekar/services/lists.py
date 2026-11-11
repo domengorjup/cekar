@@ -13,7 +13,7 @@ from __future__ import annotations
 import unicodedata
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Literal
 
 from sqlalchemy import func, select
@@ -57,6 +57,18 @@ class ListView:
     unchecked: list[ItemView]
     checked: list[ItemView]
     version: int
+
+
+# A trip older than this is treated as finished when the next item is checked.
+AUTO_CLEAR_AFTER = timedelta(hours=1)
+
+
+@dataclass(frozen=True)
+class CheckResult:
+    """Outcome of ``set_checked``: the item and how many old items were auto-cleared."""
+
+    item: Item
+    auto_cleared: int = 0
 
 
 @dataclass(frozen=True)
@@ -491,12 +503,17 @@ def update_item(
     return item
 
 
-def set_checked(session: Session, actor_id: str, item_id: str, checked: bool) -> Item:
+def set_checked(
+    session: Session, actor_id: str, item_id: str, checked: bool
+) -> CheckResult:
     """
     Check (sets ``checked_at`` and ``checked_by_id``) or uncheck an item.
 
     Unchecking keeps ``position``, so the item returns to its old place.
-    A call that changes nothing writes nothing.
+    A call that changes nothing writes nothing. Checking an item when the
+    other checked items of the list were all checked at least
+    ``AUTO_CLEAR_AFTER`` ago first clears those (the previous trip), so the
+    item starts a new trip; ``auto_cleared`` is how many were cleared.
 
     Raises
     ------
@@ -506,7 +523,9 @@ def set_checked(session: Session, actor_id: str, item_id: str, checked: bool) ->
     item = get_item(session, item_id)
     if item.cleared_at is not None:
         raise ServiceError("error.not_found")
+    auto_cleared = 0
     if checked and item.checked_at is None:
+        auto_cleared = _clear_stale_trip(session, item)
         item.checked_at = utc_now()
         item.checked_by_id = actor_id
         sync.touch(item, session)
@@ -514,7 +533,21 @@ def set_checked(session: Session, actor_id: str, item_id: str, checked: bool) ->
         item.checked_at = None
         item.checked_by_id = None
         sync.touch(item, session)
-    return item
+    return CheckResult(item=item, auto_cleared=auto_cleared)
+
+
+def _clear_stale_trip(session: Session, item: Item) -> int:
+    """Clear the list's checked items if the newest was checked long ago."""
+    others = [i for i in _checked_items(session, item.list_id) if i.id != item.id]
+    if not others:
+        return 0
+    now = utc_now()
+    if now - max(i.checked_at for i in others) < AUTO_CLEAR_AFTER:
+        return 0
+    for other in others:
+        other.cleared_at = now
+        sync.touch(other, session)
+    return len(others)
 
 
 def reorder_items(

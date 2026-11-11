@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
+
 import pytest
 from sqlalchemy import select
 
-from cekar.models import Item, ShoppingList
+from cekar.models import Item, ShoppingList, utc_now
 from cekar.services import ServiceError, lists, sync
 
 
@@ -357,3 +359,75 @@ def test_lists_version_tracks_any_list_and_item(session, people, groceries):
     assert after_item > after_list
     lists.delete_list(session, people.ana.id, other.id)
     assert lists.lists_version(session) > after_item
+
+
+# --- auto-clear of the previous trip ---------------------------------------------
+
+def _check_at(session, people, shopping, name, when):
+    item = add(session, people, shopping, name)
+    item.checked_at = when  # set directly: checking would auto-clear the others
+    item.checked_by_id = people.ana.id
+    session.flush()
+    return item
+
+
+def test_check_after_an_hour_clears_the_previous_trip(session, people, groceries):
+    now = utc_now()
+    old_a = _check_at(session, people, groceries, "A", now - timedelta(hours=1, minutes=1))
+    old_b = _check_at(session, people, groceries, "B", now - timedelta(hours=2))
+    fresh = add(session, people, groceries, "Fresh")
+
+    result = lists.set_checked(session, people.bor.id, fresh.id, True)
+
+    assert result.auto_cleared == 2
+    assert old_a.cleared_at is not None and old_a.cleared_at == old_b.cleared_at
+    assert fresh.checked_at is not None and fresh.cleared_at is None
+    assert [i.name for i in lists.list_view(session, groceries.id).checked] == ["Fresh"]
+
+
+def test_check_within_an_hour_keeps_the_trip(session, people, groceries):
+    now = utc_now()
+    _check_at(session, people, groceries, "A", now - timedelta(hours=3))
+    recent = _check_at(session, people, groceries, "B", now - timedelta(minutes=59))
+    fresh = add(session, people, groceries, "Fresh")
+
+    result = lists.set_checked(session, people.ana.id, fresh.id, True)
+
+    assert result.auto_cleared == 0 and recent.cleared_at is None
+    assert len(lists.list_view(session, groceries.id).checked) == 3
+
+
+def test_newest_checked_item_decides(session, people, groceries):
+    now = utc_now()
+    _check_at(session, people, groceries, "Old", now - timedelta(hours=5))
+    _check_at(session, people, groceries, "New", now - timedelta(minutes=5))
+    fresh = add(session, people, groceries, "Fresh")
+    assert lists.set_checked(session, people.ana.id, fresh.id, True).auto_cleared == 0
+
+
+def test_uncheck_never_auto_clears(session, people, groceries):
+    now = utc_now()
+    old = _check_at(session, people, groceries, "Old", now - timedelta(hours=5))
+    other = _check_at(session, people, groceries, "Other", now - timedelta(minutes=1))
+    result = lists.set_checked(session, people.ana.id, other.id, False)
+    assert result.auto_cleared == 0 and old.cleared_at is None
+
+
+def test_auto_clear_is_per_list(session, people, groceries):
+    hardware = lists.create_list(session, people.ana.id, "Hardware")
+    session.flush()
+    stale = _check_at(session, people, hardware, "Nails", utc_now() - timedelta(hours=9))
+    fresh = add(session, people, groceries, "Fresh")
+    assert lists.set_checked(session, people.ana.id, fresh.id, True).auto_cleared == 0
+    assert stale.cleared_at is None
+
+
+def test_undo_after_auto_clear_restores_only_the_old_items(session, people, groceries):
+    old = _check_at(session, people, groceries, "Old", utc_now() - timedelta(hours=2))
+    fresh = add(session, people, groceries, "Fresh")
+    lists.set_checked(session, people.ana.id, fresh.id, True)
+
+    assert lists.restore_cleared(session, people.ana.id, groceries.id) == 1
+
+    assert old.cleared_at is None and old.checked_at is not None
+    assert fresh.cleared_at is None and fresh.checked_at is not None

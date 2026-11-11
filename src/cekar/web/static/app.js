@@ -232,6 +232,8 @@
       method: "POST", body: formBody(form), credentials: "same-origin", headers: FORM_HEADER
     }).then(function (r) {
       if (!r.ok) { throw new Error("HTTP " + r.status); }
+      // Checking an item cleared the last trip: load the page that offers Undo.
+      if (r.redirected && new URL(r.url).searchParams.has("undo")) { window.location.href = r.url; return null; }
       return refreshLive();
     }).catch(function (error) { fail(error); });
   }

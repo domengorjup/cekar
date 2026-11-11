@@ -1,18 +1,9 @@
 {% extends layout %}
-{% from "_macros.html" import messages, field, select, dialog, confirm_dialog with context %}
+{% from "_macros.html" import messages, field, select, dialog with context %}
 {% block title %}{{ t('trip.title') }} - {{ t('app.name') }}{% endblock %}
 {% block content %}
 {% set close = '/lists/' ~ form.list_id %}
-{% set action = '/lists/' ~ form.list_id ~ '/done' %}
-{% if not form.enough_members %}
-{% call confirm_dialog(request, t('trip.clear_title'), action) %}
-  <p>{{ t('trip.clear_body') }}</p>
-  <div class="dialog-foot">
-    <a class="btn" href="{{ url(request, close) }}" data-close>{{ t('common.cancel') }}</a>
-    <button type="submit" class="btn primary">{{ t('trip.clear_confirm') }}</button>
-  </div>
-{% endcall %}
-{% else %}
+{% set action = '/lists/' ~ form.list_id ~ '/done/expense' %}
 {% set priced_data = [] %}
 {% for item in form.priced %}{% set _ = priced_data.append({'id': item.item_id, 'name': item.name, 'for': item.for_whom_id, 'forName': item.for_whom_name}) %}{% endfor %}
 {% set trip_data = {'list': form.list_name, 'priced': priced_data,
@@ -60,5 +51,4 @@
     <button type="submit" class="btn primary">{{ t('common.confirm') }}</button>
   </div>
 {% endcall %}
-{% endif %}
 {% endblock %}

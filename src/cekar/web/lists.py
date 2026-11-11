@@ -337,10 +337,15 @@ def item_check(request: Request, session: SessionDep, user: CurrentUser, item_id
                checked: Annotated[str, Form()] = "1"):
     """Check or uncheck an item (one tap)."""
     try:
-        item = lists.set_checked(session, user.id, item_id, checked == "1")
+        result = lists.set_checked(session, user.id, item_id, checked == "1")
     except ServiceError as exc:
         raise _not_found(exc) from exc
-    return redirect(request, f"/lists/{item.list_id}")
+    path = f"/lists/{result.item.list_id}"
+    if result.auto_cleared:
+        # The previous trip was cleared: the next page offers Undo (design D17).
+        return cleared_redirect(request, path, result.item.list_id, result.auto_cleared,
+                                auto=True)
+    return redirect(request, path)
 
 
 @router.post("/items/{item_id}/delete")

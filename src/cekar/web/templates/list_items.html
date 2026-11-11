@@ -37,9 +37,6 @@
     </div>
   </details>
   <div class="checked-actions">
-    <form method="post" action="{{ url(request, '/lists/' ~ list_id ~ '/clear') }}">
-      <button type="submit" class="btn outline with-icon">{{ icon('delete-outline', 18) }}{{ t('list.clear_checked') }}</button>
-    </form>
     <a class="btn primary with-icon" href="{{ url(request, '/lists/' ~ list_id ~ '/done') }}" data-dialog>{{ icon('cart-check', 18) }}{{ t('list.done_shopping') }}</a>
   </div>
   {% endif %}

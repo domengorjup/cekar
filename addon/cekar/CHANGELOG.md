@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.6
+
+- Done shopping: "Just clear" is now the default (highlighted) choice.
+
 ## 0.1.5
 
 - One **Done shopping** button under the checked items. It asks whether to just clear them or add them to expenses; "Clear checked" is gone as a separate button.

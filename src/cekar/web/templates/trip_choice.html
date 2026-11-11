@@ -16,8 +16,8 @@
   <p>{{ tn('trip.choice_body', count) }}</p>
   <div class="dialog-foot">
     <a class="btn" href="{{ url(request, close) }}" data-close>{{ t('common.cancel') }}</a>
-    <button type="submit" class="btn outline">{{ t('trip.just_clear') }}</button>
-    <a class="btn primary" href="{{ url(request, close ~ '/done/expense') }}" data-dialog>{{ t('trip.add_expense') }}</a>
+    <a class="btn outline" href="{{ url(request, close ~ '/done/expense') }}" data-dialog>{{ t('trip.add_expense') }}</a>
+    <button type="submit" class="btn primary">{{ t('trip.just_clear') }}</button>
   </div>
 {% endcall %}
 {% endif %}

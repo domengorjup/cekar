@@ -202,7 +202,7 @@ Turning off "Member of shared expenses" is never blocked. If the person's balanc
 - **Add field and edit dialog:** the add field takes the name plus the inline quantity box and "for" toggle (D8). The item edit dialog holds the full fields.
 - **Expense list:** expenses from one trip are one collapsed row (D11).
 - **Language:** no language switch anywhere in v1.0 (D10).
-- **Done shopping choice (2026-11):** under the checked items there is one primary "Done shopping" button. It opens a confirm dialog ("N checked items will be cleared") with Cancel, "Just clear" (posts to the clear route, Undo kept) and "Add to expenses" (a `data-dialog` link to the trip form at `/lists/<id>/done/expense`). With fewer than two members the old single clear confirmation stays.
+- **Done shopping choice (2026-11):** under the checked items there is one primary "Done shopping" button. It opens a confirm dialog ("N checked items will be cleared") with Cancel, "Add to expenses" (outline; a `data-dialog` link to the trip form at `/lists/<id>/done/expense`) and "Just clear" (primary, the default; posts to the clear route, Undo kept). With fewer than two members the old single clear confirmation stays.
 - **Auto-clear of the last trip (2026-11):** `lists.set_checked` clears the list's other checked items first when the newest of them is at least `AUTO_CLEAR_AFTER` (1 hour) old, so a forgotten trip does not mix with the next one. The check route redirects with `?undo=autoclear&id=<list>&n=<count>` (snackbar with Undo via `restore_cleared`); the page script follows that redirect with a normal page load instead of only refreshing the fragment. The new item is not cleared, so Undo leaves it checked.
 
 ## Follow-ups (v1.1, not in this change)

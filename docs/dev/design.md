@@ -222,7 +222,7 @@ A native `<details>` with a `<summary>`; no custom widget. Used for archived ite
 
 ### Checked section
 
-`details.checked-section` ("2 checked items") with a list card of checked rows, followed by `.checked-actions` (Done shopping, primary; it opens a `confirm` dialog with Cancel, Just clear (outline) and Add to expenses (primary link that replaces the dialog with the trip form)). Hidden when nothing is checked.
+`details.checked-section` ("2 checked items") with a list card of checked rows, followed by `.checked-actions` (Done shopping, primary; it opens a `confirm` dialog with Cancel, Add to expenses (outline link that replaces the dialog with the trip form) and Just clear (primary, the default)). Hidden when nothing is checked.
 
 ### Balance card
 

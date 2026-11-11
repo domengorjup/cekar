@@ -194,7 +194,7 @@ A native `<details>` with a `<summary>`; no custom widget. Used for archived ite
 
 ### Snackbar (delete and undo)
 
-`.snackbar` at the bottom of the screen (above the bottom nav on phones): message, an `Undo` button and a close icon, hidden after 10 seconds. A delete redirects to the page with `?undo=<kind>&id=<uuid>&name=<text>`; `base.html` renders the snackbar from those parameters (`undo_info()` in `web/ui.py`), so Undo works without JavaScript. Undo posts to the matching `.../restore` route. `deleted_redirect()` builds the redirect. "Clear checked" also offers Undo (`?undo=clear&id=<list>&n=<count>`, restore route `/lists/<id>/unclear`, service `lists.restore_cleared`). Only deleting a whole list asks first (confirm dialog), and it offers Undo too. It replaces the toast for deletes.
+`.snackbar` at the bottom of the screen (above the bottom nav on phones): message, an `Undo` button and a close icon, hidden after 10 seconds. A delete redirects to the page with `?undo=<kind>&id=<uuid>&name=<text>`; `base.html` renders the snackbar from those parameters (`undo_info()` in `web/ui.py`), so Undo works without JavaScript. Undo posts to the matching `.../restore` route. `deleted_redirect()` builds the redirect. Clearing checked items also offers Undo (`?undo=clear&id=<list>&n=<count>`, restore route `/lists/<id>/unclear`, service `lists.restore_cleared`); so does the automatic clearing of an old trip when an item is checked (`?undo=autoclear...`, same restore route; the page script follows the check redirect to show it). Only deleting a whole list asks first (confirm dialog), and it offers Undo too. It replaces the toast for deletes.
 
 ```html
 <div class="snackbar" id="snackbar" role="status">
@@ -222,7 +222,7 @@ A native `<details>` with a `<summary>`; no custom widget. Used for archived ite
 
 ### Checked section
 
-`details.checked-section` ("2 checked items") with a list card of checked rows, followed by `.checked-actions` (Clear checked, outlined; Done shopping, primary). Both buttons are hidden when nothing is checked.
+`details.checked-section` ("2 checked items") with a list card of checked rows, followed by `.checked-actions` (Done shopping, primary; it opens a `confirm` dialog with Cancel, Just clear (outline) and Add to expenses (primary link that replaces the dialog with the trip form)). Hidden when nothing is checked.
 
 ### Balance card
 

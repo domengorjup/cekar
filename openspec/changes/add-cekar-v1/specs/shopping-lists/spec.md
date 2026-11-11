@@ -54,7 +54,7 @@ The add field SHALL take the item name together with two small inline controls: 
 - **THEN** it shows the name, quantity and "for whom" fields and a delete action
 
 ### Requirement: Checked items section
-Checking or unchecking an item SHALL take one tap. Unchecked items SHALL be shown in their own order, which users can change by dragging. Checked items SHALL be shown below them in a collapsed section titled with their count, most recently checked first. "Clear checked" SHALL remove all checked items of the list from view.
+Checking or unchecking an item SHALL take one tap. Unchecked items SHALL be shown in their own order, which users can change by dragging. Checked items SHALL be shown below them in a collapsed section titled with their count, most recently checked first. "Done shopping" (see the shopping-trip spec) SHALL offer to clear all checked items of the list from view; there is no separate "Clear checked" button.
 
 #### Scenario: Check an item
 - **WHEN** a user taps the checkbox of "Milk"
@@ -66,9 +66,25 @@ Checking or unchecking an item SHALL take one tap. Unchecked items SHALL be show
 - **THEN** it returns to the unchecked items at its previous position
 
 #### Scenario: Clear checked
-- **WHEN** a user chooses "Clear checked" on a list with three checked items
+- **WHEN** a user chooses "Done shopping" and then "Just clear" on a list with three checked items
 - **THEN** the checked section disappears
 - **AND** the cleared items still count for suggestions
+
+### Requirement: Previous trip cleared automatically
+When a user checks an item and the newest `checked_at` among the other checked, not cleared items of the same list is at least one hour old, the system SHALL first clear those items (same effect as clearing, one shared `cleared_at`), then check the item, so it starts a new trip. The page SHALL show "<n> items from the last trip cleared." with Undo. Undo SHALL bring back only the items cleared that way; the newly checked item stays checked. Unchecking SHALL never clear anything.
+
+#### Scenario: Old trip cleared
+- **WHEN** two items were checked two hours ago and a user checks "Tea"
+- **THEN** the two items are cleared, "Tea" is checked
+- **AND** a message "2 items from the last trip cleared." with Undo is shown
+
+#### Scenario: Recent trip kept
+- **WHEN** the newest checked item was checked 59 minutes ago and a user checks "Tea"
+- **THEN** nothing is cleared
+
+#### Scenario: Undo
+- **WHEN** a user taps Undo on that message
+- **THEN** the two old items are checked again and "Tea" stays checked
 
 ### Requirement: Suggestions from history
 While a user types an item name, the system SHALL suggest at most 8 previously used item names from all lists, including cleared items and excluding deleted items, matched case- and accent-insensitively. Names starting with the typed text SHALL come before names containing it; within each group names SHALL be ranked by uses × 0.5^(days since last use / 30), then by name. Names already unchecked on the current list SHALL NOT be suggested. Each suggestion SHALL show the most recently used spelling.

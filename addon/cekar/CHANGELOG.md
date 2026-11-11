@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- One **Done shopping** button under the checked items. It asks whether to just clear them or add them to expenses; "Clear checked" is gone as a separate button.
+- Checking an item an hour or more after the last checked item clears the previous trip first, with a message and Undo.
+
 ## 0.1.4
 
 - Expense rows show a different icon colour per kind (split equally, for someone, personal, exact, payment, trip).

@@ -1,6 +1,12 @@
 # Done shopping
 
-When you come home, **Done shopping** turns the checked items and the receipt total into expenses and clears the items. The button is on the list page, next to **Clear checked**, once at least one item is checked.
+When you come home, **Done shopping** turns the checked items and the receipt total into expenses and clears the items. The button is on the list page, under the checked items, once at least one item is checked.
+
+Tapping it asks what to do with the checked items:
+
+- **Add to expenses** opens the form below.
+- **Just clear** only removes the checked items from the list (a message with **Undo** appears).
+- **Cancel** changes nothing.
 
 ## The form
 

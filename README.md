@@ -27,7 +27,7 @@ Cekar is a self-hosted replacement for a shared Google Keep shopping list and Sp
 ## Features
 
 - Several shopping lists. Items have a name, an optional quantity, who added them and, if wanted, who they are for. Suggestions from history appear while you type.
-- Checked items move to a collapsed section; "Clear checked" removes them. Changes from other household members show up within seconds.
+- Checked items move to a collapsed section; the "Done shopping" button clears them or turns them into expenses. Changes from other household members show up within seconds.
 - Shared expenses in euro: split equally or by exact amounts, or use the one-tap options "For <person>" and "Personal". One payer per expense.
 - Balances per pair of members, and "Settle up" for a full or partial payment.
 - "Done shopping" turns the checked items and the receipt total into expenses. Items marked "for <person>" are charged to that person; the rest is split equally.

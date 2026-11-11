@@ -29,13 +29,15 @@ Tap the circle to check an item. It moves to the **checked items** section at th
 - Drag the handle on the right to reorder unchecked items.
 - The three dots next to the list name rename or delete the whole list.
 
-## Clear checked
+## Clearing checked items
 
-**Clear checked** removes all checked items from the list. If you went shopping, use [Done shopping](done-shopping.md) instead, which also records the expenses.
+**Done shopping** removes the checked items from the list. Choose **Add to expenses** to record the shopping as expenses, or **Just clear** to only remove the items. See [Done shopping](done-shopping.md).
+
+If the newest checked item was checked more than an hour ago, checking another item clears the old ones first, so a forgotten trip does not mix with the next. A message "items from the last trip cleared" appears with **Undo**.
 
 ## Undo
 
-After deleting an item or a list, or clearing checked items, a message appears with **Undo**. Use it within a few seconds.
+After deleting an item or a list, or clearing checked items (also automatically), a message appears with **Undo**. Use it within a few seconds.
 
 ## Other people's changes
 

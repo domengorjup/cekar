@@ -1,7 +1,13 @@
 ## ADDED Requirements
 
 ### Requirement: Done shopping form
-A list with at least one checked item SHALL offer "Done shopping". It SHALL open a form with the receipt total (required), the date (default today), "Paid by" (member dropdown, default the current user if a member, else the first member), a price field for every checked item that has a "for whom" member, and the remaining checked items listed as shared. The sum of the entered prices SHALL NOT exceed the total; a blank price SHALL make that item shared.
+A list with at least one checked item SHALL offer a single "Done shopping" button (there is no separate "Clear checked" button). It SHALL open a small dialog stating how many checked items will be cleared, with the choices "Just clear" (clears the checked items and offers Undo) and "Add to expenses" (opens the form below, which has its own URL), and Cancel. The form SHALL have the receipt total (required), the date (default today), "Paid by" (member dropdown, default the current user if a member, else the first member), a price field for every checked item that has a "for whom" member, and the remaining checked items listed as shared. The sum of the entered prices SHALL NOT exceed the total; a blank price SHALL make that item shared.
+
+#### Scenario: Choice dialog
+- **WHEN** a list has three checked items, at least two members exist, and a user taps "Done shopping"
+- **THEN** a dialog says "3 checked items will be cleared from the list." with Cancel, "Just clear" and "Add to expenses"
+- **AND** "Just clear" clears the three items and shows "Cleared 3 checked items" with Undo
+- **AND** "Add to expenses" opens the form
 
 #### Scenario: Form contents
 - **WHEN** the checked items are "Milk" (shared), "Shampoo" (for Bor) and "Razor" (for Ana), and Ana opens "Done shopping"
@@ -35,7 +41,7 @@ After the trip is saved, the system SHALL clear all checked items of the list, s
 - **THEN** the list shows the three unchecked items and no checked section
 
 ### Requirement: Trip without enough members
-When fewer than two members exist, "Done shopping" SHALL only clear the checked items, after a confirmation that explains no expense will be created.
+When fewer than two members exist, "Done shopping" SHALL offer no expense option: it SHALL only clear the checked items, after a confirmation that explains no expense will be created.
 
 #### Scenario: Single member household
 - **WHEN** only one member exists and a user confirms "Done shopping"

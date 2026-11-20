@@ -7,9 +7,11 @@ import re
 from pathlib import Path
 
 import pytest
+from sqlalchemy import select
 
 from cekar.auth import INGRESS_PROXY_ADDRESS
 from cekar.config import Mode
+from cekar.models import Expense
 
 WEB = Path(__file__).parent.parent / "src" / "cekar" / "web"
 PREFIX = "/api/hassio_ingress/abc123"
@@ -292,3 +294,23 @@ def test_text_fields_carry_the_server_limits(household, people, session):
     _setup(household, people, session)
     assert 'maxlength="100"' in household.get("/expenses/new").text
     assert 'maxlength="50"' in household.get("/lists/new").text
+
+
+def test_expense_amount_accepts_a_calculation(household, people, session):
+    _setup(household, people, session)
+    saved = household.post("/expenses/new", data={
+        "title": "Party", "amount": "=12,40+3,10", "date": "2026-10-17",
+        "payer": people.ana.id, "split": "personal"})
+    assert saved.status_code == 303
+    expense = session.scalars(select(Expense).where(Expense.title == "Party")).one()
+    assert expense.amount_cents == 1550
+
+
+def test_expense_error_rerenders_the_typed_calculation(household, people, session):
+    _setup(household, people, session)
+    bad = household.post("/expenses/new", data={
+        "title": "Party", "amount": "10/0", "date": "2026-10-17",
+        "payer": people.ana.id, "split": "equal"})
+    assert bad.status_code == 422
+    assert "Can&#39;t divide by zero." in bad.text or "Can't divide by zero." in bad.text
+    assert 'value="10/0"' in bad.text

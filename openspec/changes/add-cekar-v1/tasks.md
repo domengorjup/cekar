@@ -117,4 +117,5 @@
 - [x] 11.3 Install on `haos-test` from the repository URL. As two different HA users (one admin, one not): add items on one, see them appear on the other within ~5 s; tick members; record an equal, a for-other and a personal expense; done shopping; settle up partially; delete an item and an expense and undo both; check that no language switch is shown. Screenshot inside HA and review against the mockup.
 - [x] 11.5 One "Done shopping" button with a choice dialog (Just clear / Add to expenses); trip form at `/lists/<id>/done/expense`.
 - [x] 11.6 Auto-clear the previous trip when an item is checked at least one hour after the newest checked item; notice with Undo.
+- [x] 11.7 Calculations in amount fields (`=12,40+3,10`): server parser, one browser parser, live `= €15.50` hint.
 - [x] 11.4 Run `openspec validate add-cekar-v1 --strict` and update the artifacts to match what was built.

@@ -52,6 +52,8 @@ to_lists = "Back to Lists"
 [error.amount]
 required = "Enter an amount."
 invalid = "Enter an amount like 12.50 or 12,50, with at most two decimals."
+expression = "Not a valid calculation."
+divide_by_zero = "Can't divide by zero."
 not_positive = "The amount must be more than zero."
 too_large = "That amount is too large."
 

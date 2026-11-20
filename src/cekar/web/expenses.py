@@ -104,10 +104,9 @@ def _entered_from_form(form, member_ids: list[str]) -> dict:
 
 def _exact_cents(text: str) -> int:
     """An exact-amount field: blank or zero means no share."""
-    cleaned = text.strip().replace(",", ".")
-    if cleaned == "" or (cleaned.replace(".", "").isdigit() and float(cleaned) == 0):
+    if not text.strip():
         return 0
-    return parse_amount(cleaned)
+    return parse_amount(text, allow_zero=True)
 
 
 def _parse(form, member_ids: list[str]) -> expenses.ExpenseInput:

@@ -382,10 +382,109 @@
   });
 
   /* ---------- expense form: "For <person>" follows the payer; exact amounts add up ---------- */
-  function parseCents(text) {
-    var match = /^(\d+)(?:[.,](\d{1,2}))?$/.exec(text.trim());
-    return match ? parseInt(match[1], 10) * 100 + parseInt(((match[2] || "") + "00").slice(0, 2), 10) : null;
+  /* One parser for every amount field (same rules as parse_amount in formatting.py):
+     a plain number (at most 2 decimals) or a calculation with + - * / ( ) and unary minus.
+     Exact fractions of BigInts, so halves round up like on the server. No eval. */
+  function gcd(a, b) { a = a < 0n ? -a : a; b = b < 0n ? -b : b; while (b) { var r = a % b; a = b; b = r; } return a; }
+  function frac(n, d) {
+    if (d < 0n) { n = -n; d = -d; }
+    var g = gcd(n, d) || 1n;
+    return { n: n / g, d: d / g };
   }
+
+  function evaluateCalc(text) {
+    var pos = 0;
+    function fail() { throw new Error("calc"); }
+    function peek() { return text.charAt(pos); }
+    function sum() {
+      var v = product();
+      while (peek() === "+" || peek() === "-") {
+        var plus = text.charAt(pos++) === "+";
+        var t = product();
+        v = frac(v.n * t.d + (plus ? 1n : -1n) * t.n * v.d, v.d * t.d);
+      }
+      return v;
+    }
+    function product() {
+      var v = unary();
+      while (peek() === "*" || peek() === "/") {
+        var times = text.charAt(pos++) === "*";
+        var f = unary();
+        if (!times && f.n === 0n) { fail(); }
+        v = times ? frac(v.n * f.n, v.d * f.d) : frac(v.n * f.d, v.d * f.n);
+      }
+      return v;
+    }
+    function unary() {
+      if (peek() === "-") { pos++; var u = unary(); return { n: -u.n, d: u.d }; }
+      return atom();
+    }
+    function atom() {
+      if (peek() === "(") {
+        pos++;
+        var v = sum();
+        if (peek() !== ")") { fail(); }
+        pos++;
+        return v;
+      }
+      var m = /^(\d+)(?:[.,](\d+))?/.exec(text.slice(pos));
+      if (!m) { fail(); }
+      pos += m[0].length;
+      var decimals = m[2] || "";
+      return frac(BigInt(m[1] + decimals), 10n ** BigInt(decimals.length));
+    }
+    var value = sum();
+    if (pos !== text.length) { fail(); }
+    return value;
+  }
+
+  function isCalculation(text) {
+    var cleaned = text.trim().replace(/^=/, "").trim();
+    return /[-+*/()]/.test(cleaned) && !/^-?\d+(?:[.,]\d{1,2})?$/.test(cleaned);
+  }
+
+  function parseCents(text) {
+    var cleaned = text.trim().replace(/^=/, "").trim();
+    if (!isCalculation(text)) {
+      var match = /^(\d+)(?:[.,](\d{1,2}))?$/.exec(cleaned);
+      return match ? parseInt(match[1], 10) * 100 + parseInt(((match[2] || "") + "00").slice(0, 2), 10) : null;
+    }
+    if (cleaned.length > 200) { return null; }
+    try {
+      var v = evaluateCalc(cleaned.replace(/ /g, ""));
+      var cents = (v.n * 100n * 2n + v.d) / (v.d * 2n);  /* floor(x + 1/2) for x >= 0 */
+      if (v.n < 0n) { return null; }
+      return Number(cents);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /* Live result under an amount field that holds a calculation: "= €15.50" */
+  function showCalcHint(input) {
+    var field = input.closest(".field");
+    if (!field) { return; }
+    var hint = field.querySelector(".calc-hint");
+    var cents = isCalculation(input.value) ? parseCents(input.value) : null;
+    if (cents === null) {
+      if (hint) { hint.remove(); }
+      field.classList.remove("has-calc");
+      return;
+    }
+    if (!hint) {
+      hint = document.createElement("div");
+      hint.className = "calc-hint";
+      hint.setAttribute("role", "status");
+      field.appendChild(hint);
+      field.classList.add("has-calc");
+    }
+    hint.textContent = "= " + euros(cents);
+  }
+
+  document.addEventListener("input", function (event) {
+    if (event.target.matches && event.target.matches("input[inputmode=decimal]")) { showCalcHint(event.target); }
+  });
+  document.querySelectorAll("input[inputmode=decimal]").forEach(showCalcHint);
 
   function euros(cents) { return "€" + (cents / 100).toFixed(2); }
 

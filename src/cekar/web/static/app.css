@@ -253,6 +253,8 @@ h2 { font-size: 14px; font-weight: 500; color: var(--secondary-text-color); marg
 .field select option { background: var(--card-background-color); }
 .field .suffix { position: absolute; right: 16px; bottom: 8px; color: var(--secondary-text-color); font-size: 14px; pointer-events: none; }
 .field.has-suffix input { padding-right: 36px; }
+.field .calc-hint { font-size: 12px; color: var(--secondary-text-color); padding-top: 2px; }
+.field.has-calc .suffix { bottom: auto; top: 26px; }
 .field.computed input { color: var(--primary-color); }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 /* Import mapping: the constant-value field shows only when "Constant value" is chosen. */

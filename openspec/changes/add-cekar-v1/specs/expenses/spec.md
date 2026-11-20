@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Expense records
-An expense SHALL have a title, an amount in euro (stored as integer cents, greater than zero, at most two decimals), a date (default today), exactly one payer, and a split method with its shares. Amount input SHALL accept a decimal comma or a decimal point. Users SHALL be able to edit and delete any expense. Deleting SHALL NOT ask for confirmation and SHALL offer Undo.
+An expense SHALL have a title, an amount in euro (stored as integer cents, greater than zero, at most two decimals), a date (default today), exactly one payer, and a split method with its shares. Amount input SHALL accept a decimal comma or a decimal point. Amount input SHALL also accept a simple calculation (optional leading `=`; numbers, `+ - * /`, unary minus, parentheses; spaces ignored), evaluated exactly and rounded to whole cents with halves rounded up; a plain number keeps the limit of two decimals, a calculation does not. A malformed calculation or a division by zero SHALL be refused with its own message; a result of zero or less, or too large, is refused as for a plain number. Users SHALL be able to edit and delete any expense. Deleting SHALL NOT ask for confirmation and SHALL offer Undo.
 
 #### Scenario: Decimal comma
 - **WHEN** a user enters the amount "12,5"
@@ -9,6 +9,22 @@ An expense SHALL have a title, an amount in euro (stored as integer cents, great
 
 #### Scenario: Invalid amount
 - **WHEN** a user enters "0", "-3" or "1,234"
+- **THEN** the expense is not saved and a validation message is shown
+
+#### Scenario: Calculation
+- **WHEN** a user enters the amount "=12,40+3,10"
+- **THEN** the expense is stored as 1550 cents
+
+#### Scenario: Calculation rounds to cents
+- **WHEN** a user enters the amount "1,299*0,75" (0.97425)
+- **THEN** the expense is stored as 97 cents
+
+#### Scenario: Division by zero
+- **WHEN** a user enters the amount "10/0"
+- **THEN** the expense is not saved and the message "Can't divide by zero." is shown with the typed text kept
+
+#### Scenario: Plain number keeps two decimals
+- **WHEN** a user enters "1,234" without any operator
 - **THEN** the expense is not saved and a validation message is shown
 
 ### Requirement: Paid-by dropdown

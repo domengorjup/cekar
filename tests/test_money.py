@@ -109,3 +109,48 @@ def test_shares_always_sum_and_differ_by_at_most_one(amount, payer):
 def test_split_equal_rejects_bad_calls(amount, participants):
     with pytest.raises(ValueError):
         split_equal(amount, participants, "ana", ORDER)
+
+
+@pytest.mark.parametrize(
+    ("text", "cents"),
+    [
+        ("=12,40+3,10", 1550), ("12.40 + 3.10", 1550), ("= 12,40 + 3,10", 1550),
+        ("=3*2,49-1", 647), ("(10+5)/3", 500), ("2+3*4", 1400), ("(2+3)*4", 2000),
+        ("20-(-5)", 2500), ("-(2-5)", 300), ("--3+0", 300), ("10/4", 250),
+        ("1,299*0,75", 97),      # 0.97425
+        ("0,125*0,1+0", 1),      # 0.0125 -> 1.25 cents
+        ("0,005*100+0", 50), ("0,0049+0,005", 1), ("1/3*3", 100),
+        ("0,745+0", 75),         # 74.5 cents: halves round up
+    ],
+)
+def test_parse_amount_calculation(text, cents):
+    assert parse_amount(text) == cents
+
+
+@pytest.mark.parametrize(
+    ("text", "key"),
+    [
+        ("12+", "error.amount.expression"), ("2**3", "error.amount.expression"),
+        ("(1+2", "error.amount.expression"), ("1+2)", "error.amount.expression"),
+        ("2^3+1", "error.amount.expression"), ("a+1", "error.amount.expression"),
+        ("1,2,3+1", "error.amount.expression"), ("()", "error.amount.expression"),
+        ("1+" * 120 + "1", "error.amount.expression"),
+        ("10/0", "error.amount.divide_by_zero"), ("1/(2-2)", "error.amount.divide_by_zero"),
+        ("5-5", "error.amount.not_positive"), ("2-3", "error.amount.not_positive"),
+        ("0,001*2", "error.amount.not_positive"),
+        ("9999999,99+1", "error.amount.too_large"), ("10000000*1", "error.amount.too_large"),
+        ("1,234", "error.amount.invalid"), ("=1,234", "error.amount.invalid"),
+        ("1 234", "error.amount.invalid"), ("abc", "error.amount.invalid"),
+        ("=", "error.amount.required"),
+    ],
+)
+def test_parse_amount_calculation_errors(text, key):
+    with pytest.raises(ServiceError) as caught:
+        parse_amount(text)
+    assert caught.value.key == key
+
+
+def test_parse_amount_allow_zero_for_exact_shares():
+    assert parse_amount("2-2", allow_zero=True) == 0
+    assert parse_amount("0,00", allow_zero=True) == 0
+    assert parse_amount("2+2", allow_zero=True) == 400

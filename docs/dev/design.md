@@ -170,6 +170,8 @@ Use the macros from `_macros.html`; they produce HA's filled text field (label a
 {{ textarea('Notes', 'notes', f.notes) }}
 ```
 
+An amount field (`inputmode="decimal"`) accepts a calculation; `app.js` adds `.calc-hint` ("= €15.50", small secondary text) inside the `.field` while it holds one that evaluates, and `.has-calc` moves the unit suffix up to the input line.
+
 Lay fields out with `.grid2` / `.grid3` inside `.dialog-body`; plain forms on a page use `.card.card-pad.stack`. Currency and units are suffixes, not part of the label.
 
 ### Collapsible section

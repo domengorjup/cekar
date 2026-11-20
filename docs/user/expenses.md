@@ -10,7 +10,7 @@ Press the **+** button.
 
 ![Add expense](../assets/screenshots/expense-add-desktop-light.png)
 
-Fill in **Title**, **Amount** (a comma or a point both work), **Date** and **Paid by** (starts as you). Then choose **How is it split?**
+Fill in **Title**, **Amount** (a comma or a point both work; you can also type a calculation such as `=12,40+3,10` or `(10+5)/3` and the result shows under the field), **Date** and **Paid by** (starts as you). Then choose **How is it split?**
 
 | Choice | What it does |
 |---|---|

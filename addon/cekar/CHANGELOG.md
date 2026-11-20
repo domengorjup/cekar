@@ -1,9 +1,5 @@
 # Changelog
 
-## Unreleased
-
-- Amount fields accept a simple calculation such as `=12,40+3,10` or `(10+5)/3`; the result shows under the field.
-
 ## 0.1.6
 
 - Done shopping: "Just clear" is now the default (highlighted) choice.
